@@ -1,5 +1,5 @@
 @PluginSubGroup(
-    description = "This sub-group of plugins contains tasks for running Docker command.",
+    description = "This subgroup of plugins contains tasks for interacting with the Docker API.",
     categories = { PluginSubGroup.PluginCategory.SCRIPT }
 )
 package io.kestra.plugin.docker;

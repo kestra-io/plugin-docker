@@ -33,12 +33,12 @@ import javax.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Execute a groovy script."
+    title = "Build a Docker image and push it to a remote container registry."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Build and push a docker image to a registry",
+            title = "Build and push a Docker image to a registry",
             code = {"dockerfile: |",
                 "  FROM ubuntu",
                 "  ARG APT_PACKAGES=\"\"",
@@ -51,7 +51,7 @@ import javax.validation.constraints.NotNull;
                 "  APT_PACKAGES: curl",
                 "labels:",
                 "  unit-test: \"true\"",
-                "credential:",
+                "credentials:",
                 "  username: <your-user>",
                 "  password: <your-password>",
             }
@@ -60,31 +60,31 @@ import javax.validation.constraints.NotNull;
 )
 public class Build extends Task implements RunnableTask<Build.Output> {
     @Schema(
-        title = "Docker api uri"
+        title = "The URI of the Docker API"
     )
     @PluginProperty(dynamic = true)
     private String host;
 
     @Schema(
-        title = "Credential for registry to push your image."
+        title = "Credentials to push your image to a container registry."
     )
     @PluginProperty
     private DockerOptions.Credentials credentials;
 
     @Schema(
-        title = "The templated string to render"
+        title = "The contents of your Dockerfile passed as a string, or a path to the Dockerfile"
     )
     @PluginProperty(dynamic = true)
     private String dockerfile;
 
     @Schema(
-        title = "List of target platforms for build."
+        title = "The target platform for the image e.g. linux/amd64."
     )
     @PluginProperty(dynamic = true)
     private List<String> platforms;
 
     @Schema(
-        title = "Does the build will be push to a registry."
+        title = "Whether to push the image to a remote container registry."
     )
     @PluginProperty(dynamic = true)
     @Builder.Default
@@ -105,7 +105,7 @@ public class Build extends Task implements RunnableTask<Build.Output> {
     private String tag;
 
     @Schema(
-        title = "Build-time variables."
+        title = "Optional build arguments in a `key: value` format."
     )
     @PluginProperty(
         additionalProperties = String.class,
@@ -114,7 +114,7 @@ public class Build extends Task implements RunnableTask<Build.Output> {
     protected Map<String, String> buildArgs;
 
     @Schema(
-        title = "Additional metadata for this images."
+        title = "Additional metadata for the image in a `key: value` format."
     )
     @PluginProperty(
         additionalProperties = String.class,
