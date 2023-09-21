@@ -60,7 +60,7 @@ import javax.validation.constraints.NotNull;
 )
 public class Build extends Task implements RunnableTask<Build.Output> {
     @Schema(
-        title = "The URI of the Docker API"
+        title = "The URI of your Docker host e.g. localhost"
     )
     @PluginProperty(dynamic = true)
     private String host;
@@ -91,7 +91,7 @@ public class Build extends Task implements RunnableTask<Build.Output> {
     private Boolean push = false;
 
     @Schema(
-        title = "Always attempt to pull a newer version of the base image."
+        title = "Always attempt to pull the latest version of the base image."
     )
     @PluginProperty(dynamic = true)
     @Builder.Default
