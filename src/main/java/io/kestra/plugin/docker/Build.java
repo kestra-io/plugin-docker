@@ -46,14 +46,16 @@ import javax.validation.constraints.NotNull;
                 "  RUN apt-get update && apt-get install -y --no-install-recommends ${APT_PACKAGES};",
                 "platforms:",
                 "- linux/amd64",
-                "tag: private-registry.io/unit-test:latest",
+                "tags:",
+                "- private-registry.io/unit-test:latest",
                 "buildArgs:",
                 "  APT_PACKAGES: curl",
                 "labels:",
                 "  unit-test: \"true\"",
                 "credentials:",
-                "  username: <your-user>",
-                "  password: <your-password>",
+                "  - registry: <registry.url.com>",
+                "    username: <your-user>",
+                "    password: <your-password>",
             }
         ),
     }
@@ -98,7 +100,7 @@ public class Build extends Task implements RunnableTask<Build.Output> {
     private Boolean pull = true;
 
     @Schema(
-        title = "The lsit of tag of this image."
+        title = "The list of tag of this image."
     )
     @PluginProperty(dynamic = true)
     @NotNull
