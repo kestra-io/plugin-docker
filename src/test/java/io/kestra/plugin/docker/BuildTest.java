@@ -30,7 +30,7 @@ class BuildTest {
             .platforms(List.of("linux/amd64"))
             .buildArgs(Map.of("APT_PACKAGES", "curl"))
             .labels(Map.of("unit-test", "true"))
-            .tag("unit-test")
+            .tags(Set.of("unit-test"))
             .dockerfile("""
                 FROM ubuntu
                 ARG APT_PACKAGES=""
@@ -63,7 +63,7 @@ class BuildTest {
             .platforms(List.of("linux/amd64"))
             .buildArgs(Map.of("APT_PACKAGES", "curl"))
             .labels(Map.of("unit-test", "true"))
-            .tag("unit-test")
+            .tags(Set.of("unit-test"))
             .dockerfile(path.getFileName().toString())
             .build();
 

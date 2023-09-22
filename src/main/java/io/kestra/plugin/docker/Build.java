@@ -3,21 +3,21 @@ package io.kestra.plugin.docker;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.BuildImageCmd;
-import com.github.dockerjava.api.command.BuildImageResultCallback;
-import com.github.dockerjava.api.model.AuthConfig;
+import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.PushResponseItem;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.kestra.plugin.scripts.exec.scripts.runners.DockerService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import io.kestra.core.models.annotations.Example;
-import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.runners.RunContext;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
@@ -69,7 +69,7 @@ public class Build extends Task implements RunnableTask<Build.Output> {
         title = "Credentials to push your image to a container registry."
     )
     @PluginProperty
-    private DockerOptions.Credentials credentials;
+    private List<DockerOptions.Credentials> credentials;
 
     @Schema(
         title = "The contents of your Dockerfile passed as a string, or a path to the Dockerfile"
@@ -98,11 +98,11 @@ public class Build extends Task implements RunnableTask<Build.Output> {
     private Boolean pull = true;
 
     @Schema(
-        title = "The tag of this image."
+        title = "The lsit of tag of this image."
     )
     @PluginProperty(dynamic = true)
     @NotNull
-    private String tag;
+    private Set<String> tags;
 
     @Schema(
         title = "Optional build arguments in a `key: value` format."
@@ -127,7 +127,20 @@ public class Build extends Task implements RunnableTask<Build.Output> {
         DefaultDockerClientConfig.Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder()
             .withDockerHost(DockerService.findHost(runContext, this.host));
 
+        if (this.getCredentials() != null) {
+            Path config = DockerService.createConfig(
+                runContext,
+                Map.of(),
+                this.getCredentials(),
+                null
+            );
+
+            builder.withDockerConfig(config.toFile().getAbsolutePath());
+        }
+
         try (DockerClient dockerClient = DockerService.client(builder.build())) {
+            Set<String> tags = runContext.render(this.tags);
+
             BuildImageCmd buildImageCmd = dockerClient.buildImageCmd()
                 .withPull(this.pull);
 
@@ -147,8 +160,8 @@ public class Build extends Task implements RunnableTask<Build.Output> {
                 runContext.render(this.platforms).forEach(buildImageCmd::withPlatform);
             }
 
-            if (this.tag != null) {
-                buildImageCmd.withTags(Set.of(runContext.render(this.tag)));
+            if (this.tags != null) {
+                buildImageCmd.withTags(tags);
             }
 
             if (this.buildArgs != null) {
@@ -160,45 +173,20 @@ public class Build extends Task implements RunnableTask<Build.Output> {
             }
 
             String imageId = buildImageCmd
-                .exec(new BuildImageResultCallback())
+                .exec(new BuildImageResultCallback(runContext))
                 .awaitImageId();
 
             if (this.push) {
-                AuthConfig authConfig = new AuthConfig()
-                    .withRegistryAddress(DockerService.registryUrlFromImage(tag));
+                for(String tag : tags){
+                    PushResponseItemCallback resultPush = dockerClient.pushImageCmd(tag)
+                        .exec(new PushResponseItemCallback(runContext));
 
-                if (this.credentials != null) {
-                    if (this.credentials.getRegistry() != null) {
-                        authConfig.withRegistryAddress(runContext.render(this.credentials.getRegistry()));
-                    }
+                    resultPush.awaitCompletion();
 
-                    if (this.credentials.getUsername() != null) {
-                        authConfig.withUsername(runContext.render(this.credentials.getUsername()));
-                    }
-
-                    if (this.credentials.getPassword() != null) {
-                        authConfig.withPassword(runContext.render(this.credentials.getPassword()));
-                    }
-
-                    if (this.credentials.getAuth() != null) {
-                        authConfig.withAuth(runContext.render(this.credentials.getAuth()));
-                    }
-
-                    if (this.credentials.getRegistryToken() != null) {
-                        authConfig.withRegistrytoken(runContext.render(this.credentials.getRegistryToken()));
-                    }
-
-                    if (this.credentials.getIdentityToken() != null) {
-                        authConfig.withIdentityToken(runContext.render(this.credentials.getIdentityToken()));
+                    if (resultPush.getError() != null) {
+                        throw resultPush.getError();
                     }
                 }
-
-                ResultCallback.Adapter<PushResponseItem> resultPush = dockerClient.pushImageCmd(Objects.requireNonNull(
-                        buildImageCmd.getTags()).iterator().next())
-                    .withAuthConfig(authConfig)
-                    .exec(new ResultCallback.Adapter<>());
-
-                resultPush.awaitCompletion();
             }
 
             return Output.builder()
@@ -214,5 +202,71 @@ public class Build extends Task implements RunnableTask<Build.Output> {
             title = "The generated image id."
         )
         private String imageId;
+    }
+
+    @Getter
+    public static class PushResponseItemCallback extends ResultCallback.Adapter<PushResponseItem>  {
+        private RunContext runContext;
+        private Exception error;
+
+        public PushResponseItemCallback(RunContext runContext) {
+            super();
+
+            this.runContext = runContext;
+        }
+
+        @Override
+        public void onNext(PushResponseItem item) {
+            super.onNext(item);
+
+            if (item.getErrorDetail() != null) {
+                this.error = new Exception(item.getErrorDetail().getMessage());
+            }
+
+            //noinspection deprecation
+            if (item.getProgress() != null) {
+                this.runContext.logger().debug("{} {}", item.getId(), item.getProgress());
+            } else if (item.getRawValues().containsKey("status") &&
+                !item.getRawValues().get("status").toString().trim().isEmpty()
+            ) {
+                this.runContext.logger().info("{}", item.getRawValues().get("status").toString().trim());
+            }
+
+            if (item.getProgressDetail() != null &&
+                item.getProgressDetail().getCurrent() != null &&
+                Objects.equals(item.getProgressDetail().getCurrent(), item.getProgressDetail().getTotal())
+            ) {
+                runContext.metric(Counter.of("bytes", item.getProgressDetail().getTotal()));
+            }
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            super.onError(throwable);
+
+            this.error = new Exception(throwable);
+        }
+    }
+
+    public static class BuildImageResultCallback extends com.github.dockerjava.api.command.BuildImageResultCallback {
+        private RunContext runContext;
+
+        public BuildImageResultCallback(RunContext runContext) {
+            super();
+
+            this.runContext = runContext;
+        }
+
+        @Override
+        public void onNext(BuildResponseItem item) {
+            super.onNext(item);
+
+            if (item.getRawValues().containsKey("stream") &&
+                !item.getRawValues().get("stream").toString().trim().isEmpty()
+            ) {
+                this.runContext.logger().info("{}", item.getRawValues().get("stream").toString().trim());
+            }
+        }
+
     }
 }
