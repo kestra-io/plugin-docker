@@ -24,7 +24,7 @@ sourceCompatibility = 17
 targetCompatibility = 17
 
 group "io.kestra.plugin"
-description 'Plugin template for Kestra'
+description "Execute Docker commands as part of a Kestra workflow."
 
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
@@ -54,7 +54,8 @@ dependencies {
     compileOnly group: "io.kestra", name: "core", version: kestraVersion
 
     // libs included in the final jar
-    api group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+    compileOnly group: "io.kestra", name: "core", version: kestraVersion
+    implementation group: "io.kestra.plugin", name: "plugin-script", version: kestraVersion
 }
 
 
@@ -110,8 +111,8 @@ jar {
     manifest {
         attributes(
                 "X-Kestra-Name": project.name,
-                "X-Kestra-Title": "Template",
-                "X-Kestra-Group": project.group + ".templates",
+                "X-Kestra-Title": "Docker",
+                "X-Kestra-Group": project.group + ".docker",
                 "X-Kestra-Description": project.description,
                 "X-Kestra-Version": project.version
         )
