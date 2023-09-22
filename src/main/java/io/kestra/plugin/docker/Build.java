@@ -53,9 +53,9 @@ import javax.validation.constraints.NotNull;
                 "labels:",
                 "  unit-test: \"true\"",
                 "credentials:",
-                "  - registry: <registry.url.com>",
-                "    username: <your-user>",
-                "    password: <your-password>",
+                "  registry: <registry.url.com>",
+                "  username: <your-user>",
+                "  password: <your-password>",
             }
         ),
     }
@@ -71,7 +71,7 @@ public class Build extends Task implements RunnableTask<Build.Output> {
         title = "Credentials to push your image to a container registry."
     )
     @PluginProperty
-    private List<DockerOptions.Credentials> credentials;
+    private DockerOptions.Credentials credentials;
 
     @Schema(
         title = "The contents of your Dockerfile passed as a string, or a path to the Dockerfile"
@@ -128,21 +128,20 @@ public class Build extends Task implements RunnableTask<Build.Output> {
     public Output run(RunContext runContext) throws Exception {
         DefaultDockerClientConfig.Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder()
             .withDockerHost(DockerService.findHost(runContext, this.host));
+        Set<String> tags = runContext.render(this.tags);
 
         if (this.getCredentials() != null) {
             Path config = DockerService.createConfig(
                 runContext,
                 Map.of(),
-                this.getCredentials(),
-                null
+                List.of(this.getCredentials()),
+                tags.iterator().next()
             );
 
             builder.withDockerConfig(config.toFile().getAbsolutePath());
         }
 
         try (DockerClient dockerClient = DockerService.client(builder.build())) {
-            Set<String> tags = runContext.render(this.tags);
-
             BuildImageCmd buildImageCmd = dockerClient.buildImageCmd()
                 .withPull(this.pull);
 
@@ -231,7 +230,7 @@ public class Build extends Task implements RunnableTask<Build.Output> {
             } else if (item.getRawValues().containsKey("status") &&
                 !item.getRawValues().get("status").toString().trim().isEmpty()
             ) {
-                this.runContext.logger().info("{}", item.getRawValues().get("status").toString().trim());
+                this.runContext.logger().info("{} {}", item.getId(), item.getRawValues().get("status").toString().trim());
             }
 
             if (item.getProgressDetail() != null &&
