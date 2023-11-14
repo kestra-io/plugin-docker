@@ -10,10 +10,8 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
-import io.kestra.core.models.tasks.NamespaceFiles;
-import io.kestra.core.models.tasks.NamespaceFilesInterface;
-import io.kestra.core.models.tasks.RunnableTask;
-import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.*;
+import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
@@ -22,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
@@ -63,7 +62,7 @@ import javax.validation.constraints.NotNull;
         ),
     }
 )
-public class Build extends Task implements RunnableTask<Build.Output>, NamespaceFilesInterface {
+public class Build extends Task implements RunnableTask<Build.Output>, NamespaceFilesInterface, InputFilesInterface {
     @Schema(
         title = "The URI of your Docker host e.g. localhost"
     )
@@ -127,9 +126,11 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
     )
     protected Map<String, String> labels;
 
-
     private NamespaceFiles namespaceFiles;
 
+    private Object inputFiles;
+
+    @SuppressWarnings("unchecked")
     @Override
     public Output run(RunContext runContext) throws Exception {
         DefaultDockerClientConfig.Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder()
@@ -159,6 +160,10 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
                 runContext.tempDir(),
                 this.namespaceFiles
             );
+        }
+
+        if (this.inputFiles != null) {
+            FilesService.inputFiles(runContext, this.inputFiles);
         }
 
         try (DockerClient dockerClient = DockerService.client(builder.build())) {
