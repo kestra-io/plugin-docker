@@ -10,8 +10,11 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
+import io.kestra.core.models.tasks.NamespaceFiles;
+import io.kestra.core.models.tasks.NamespaceFilesInterface;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.kestra.plugin.scripts.exec.scripts.runners.DockerService;
@@ -60,7 +63,7 @@ import javax.validation.constraints.NotNull;
         ),
     }
 )
-public class Build extends Task implements RunnableTask<Build.Output> {
+public class Build extends Task implements RunnableTask<Build.Output>, NamespaceFilesInterface {
     @Schema(
         title = "The URI of your Docker host e.g. localhost"
     )
@@ -124,6 +127,9 @@ public class Build extends Task implements RunnableTask<Build.Output> {
     )
     protected Map<String, String> labels;
 
+
+    private NamespaceFiles namespaceFiles;
+
     @Override
     public Output run(RunContext runContext) throws Exception {
         DefaultDockerClientConfig.Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder()
@@ -139,6 +145,20 @@ public class Build extends Task implements RunnableTask<Build.Output> {
             );
 
             builder.withDockerConfig(config.toFile().getAbsolutePath());
+        }
+
+        if (this.namespaceFiles != null ) {
+            String tenantId = ((Map<String, String>) runContext.getVariables().get("flow")).get("tenantId");
+            String namespace = ((Map<String, String>) runContext.getVariables().get("flow")).get("namespace");
+
+            NamespaceFilesService namespaceFilesService = runContext.getApplicationContext().getBean(NamespaceFilesService.class);
+            namespaceFilesService.inject(
+                runContext,
+                tenantId,
+                namespace,
+                runContext.tempDir(),
+                this.namespaceFiles
+            );
         }
 
         try (DockerClient dockerClient = DockerService.client(builder.build())) {
