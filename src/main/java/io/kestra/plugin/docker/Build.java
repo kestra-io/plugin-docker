@@ -175,7 +175,7 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
             Path dockerFile;
 
             if (path.resolve(dockerfile).toFile().exists()) {
-                dockerFile = path.resolve(dockerfile);
+                dockerFile = runContext.resolve(Path.of(dockerfile));
             } else {
                 dockerFile = runContext.tempFile(dockerfile.getBytes(StandardCharsets.UTF_8), ".dockerfile");
             }
