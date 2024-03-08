@@ -14,8 +14,8 @@ import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
-import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
-import io.kestra.plugin.scripts.exec.scripts.runners.DockerService;
+import io.kestra.plugin.scripts.runner.docker.Credentials;
+import io.kestra.plugin.scripts.runner.docker.DockerService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -72,7 +72,7 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
         title = "Credentials to push your image to a container registry."
     )
     @PluginProperty
-    private DockerOptions.Credentials credentials;
+    private Credentials credentials;
 
     @Schema(
         title = "The contents of your Dockerfile passed as a string, or a path to the Dockerfile"

@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -26,7 +25,7 @@ class RunTest {
         Run run = Run.builder()
             .id("run")
             .type(Run.class.getName())
-            .docker(DockerOptions.builder().image("docker/whalesay").build())
+            .containerImage("docker/whalesay")
             .commands(List.of("cowsay", "hello"))
             .build();
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
