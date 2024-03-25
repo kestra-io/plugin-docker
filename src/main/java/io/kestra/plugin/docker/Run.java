@@ -32,7 +32,7 @@ import java.util.Map;
         @Example(
             title = "Run the docker/whalesay container with the command 'cowsay hello'",
             code = {"""
-                  image: docker/whalesay
+                  containerImage: docker/whalesay
                   commands:
                     - cowsay
                     - hello"""
@@ -41,7 +41,7 @@ import java.util.Map;
         @Example(
             title = "Run the docker/whalesay container with no command",
             code = {"""
-                  image: docker/whalesay"""
+                  containerImage: docker/whalesay"""
             }
         )
     }
