@@ -3,15 +3,14 @@ package io.kestra.plugin.docker;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.script.ScriptRunner;
 import io.kestra.core.models.tasks.*;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import io.kestra.plugin.scripts.runner.docker.*;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -32,16 +31,16 @@ import java.util.Map;
         @Example(
             title = "Run the docker/whalesay container with the command 'cowsay hello'",
             code = {"""
-                  containerImage: docker/whalesay
-                  commands:
-                    - cowsay
-                    - hello"""
+                containerImage: docker/whalesay
+                commands:
+                  - cowsay
+                  - hello"""
             }
         ),
         @Example(
             title = "Run the docker/whalesay container with no command",
             code = {"""
-                  containerImage: docker/whalesay"""
+                containerImage: docker/whalesay"""
             }
         )
     }
@@ -177,9 +176,9 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
-        ScriptRunner scriptRunner = DockerScriptRunner
+        TaskRunner taskRunner = DockerTaskRunner
             .builder()
-            .type(DockerScriptRunner.class.getName())
+            .type(DockerTaskRunner.class.getName())
             .host(this.host)
             .config(this.config)
             .credentials(this.credentials)
@@ -198,13 +197,13 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
         var commandWrapper = new CommandsWrapper(runContext)
             .withEnv(this.getEnv())
             .withContainerImage(this.containerImage)
-            .withScriptRunner(scriptRunner)
+            .withTaskRunner(taskRunner)
             .withWarningOnStdErr(this.getWarningOnStdErr())
             .withNamespaceFiles(this.namespaceFiles)
             .withInputFiles(this.inputFiles)
             .withOutputFiles(this.outputFiles)
             .withCommands(this.commands);
-        
+
         return commandWrapper.run();
     }
 }
