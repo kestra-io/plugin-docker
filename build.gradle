@@ -48,9 +48,10 @@ dependencies {
 
     // compileOnly as it comes from Kestra script library
     compileOnly ('com.github.docker-java:docker-java:3.3.6') {
+        exclude group: 'com.github.docker-java', module: 'docker-java-transport-netty'
         exclude group: 'com.github.docker-java', module: 'docker-java-transport-jersey'
     }
-    compileOnly 'com.github.docker-java:docker-java-transport-zerodep:3.3.6'
+    compileOnly 'com.github.docker-java:docker-java-transport-httpclient5:3.3.6'
 }
 
 
