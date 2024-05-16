@@ -176,9 +176,9 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
-        TaskRunner taskRunner = DockerTaskRunner
+        TaskRunner taskRunner = Docker
             .builder()
-            .type(DockerTaskRunner.class.getName())
+            .type(Docker.class.getName())
             .host(this.host)
             .config(this.config)
             .credentials(this.credentials)
