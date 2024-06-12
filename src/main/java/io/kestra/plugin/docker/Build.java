@@ -11,6 +11,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.tasks.*;
+import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
@@ -151,7 +152,7 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
             String tenantId = ((Map<String, String>) runContext.getVariables().get("flow")).get("tenantId");
             String namespace = ((Map<String, String>) runContext.getVariables().get("flow")).get("namespace");
 
-            NamespaceFilesService namespaceFilesService = runContext.getApplicationContext().getBean(NamespaceFilesService.class);
+            NamespaceFilesService namespaceFilesService = ((DefaultRunContext)runContext).getApplicationContext().getBean(NamespaceFilesService.class);
             namespaceFilesService.inject(
                 runContext,
                 tenantId,
