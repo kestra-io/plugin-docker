@@ -11,16 +11,16 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.tasks.*;
-import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.FilesService;
-import io.kestra.core.runners.NamespaceFilesService;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.utils.Rethrow;
 import io.kestra.plugin.scripts.runner.docker.Credentials;
 import io.kestra.plugin.scripts.runner.docker.DockerService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
@@ -130,7 +130,6 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
 
     private Object inputFiles;
 
-    @SuppressWarnings("unchecked")
     @Override
     public Output run(RunContext runContext) throws Exception {
         DefaultDockerClientConfig.Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder()
@@ -148,18 +147,14 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
             builder.withDockerConfig(config.toFile().getAbsolutePath());
         }
 
-        if (this.namespaceFiles != null ) {
-            String tenantId = ((Map<String, String>) runContext.getVariables().get("flow")).get("tenantId");
-            String namespace = ((Map<String, String>) runContext.getVariables().get("flow")).get("namespace");
-
-            NamespaceFilesService namespaceFilesService = ((DefaultRunContext)runContext).getApplicationContext().getBean(NamespaceFilesService.class);
-            namespaceFilesService.inject(
-                runContext,
-                tenantId,
-                namespace,
-                runContext.tempDir(),
-                this.namespaceFiles
-            );
+        if (this.namespaceFiles != null && this.namespaceFiles.getEnabled()) {
+            runContext.storage()
+                .namespace()
+                .findAllFilesMatching(this.namespaceFiles.getInclude(), this.namespaceFiles.getExclude())
+                .forEach(Rethrow.throwConsumer(namespaceFile -> {
+                    InputStream content = runContext.storage().getFile(namespaceFile.uri());
+                    runContext.workingDir().putFile(namespaceFile.path(), content);
+                }));
         }
 
         if (this.inputFiles != null) {
@@ -170,14 +165,14 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
             BuildImageCmd buildImageCmd = dockerClient.buildImageCmd()
                 .withPull(this.pull);
 
-            Path path = runContext.tempDir();
+            Path path = runContext.workingDir().path();
             String dockerfile = runContext.render(this.dockerfile);
             Path dockerFile;
 
             if (path.resolve(dockerfile).toFile().exists()) {
-                dockerFile = runContext.resolve(Path.of(dockerfile));
+                dockerFile = runContext.workingDir().resolve(Path.of(dockerfile));
             } else {
-                dockerFile = runContext.tempFile(dockerfile.getBytes(StandardCharsets.UTF_8), ".dockerfile");
+                dockerFile = runContext.workingDir().createTempFile(dockerfile.getBytes(StandardCharsets.UTF_8), ".dockerfile");
             }
 
             buildImageCmd.withDockerfile(dockerFile.toFile());
@@ -232,12 +227,11 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
 
     @Getter
     public static class PushResponseItemCallback extends ResultCallback.Adapter<PushResponseItem>  {
-        private RunContext runContext;
+        private final RunContext runContext;
         private Exception error;
 
         public PushResponseItemCallback(RunContext runContext) {
             super();
-
             this.runContext = runContext;
         }
 
@@ -275,11 +269,10 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
     }
 
     public static class BuildImageResultCallback extends com.github.dockerjava.api.command.BuildImageResultCallback {
-        private RunContext runContext;
+        private final RunContext runContext;
 
         public BuildImageResultCallback(RunContext runContext) {
             super();
-
             this.runContext = runContext;
         }
 
