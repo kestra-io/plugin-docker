@@ -49,7 +49,7 @@ class BuildTest {
     void local() throws Exception {
         RunContext runContext = runContextFactory.of();
 
-        Path path = runContext.tempFile(".DockerFile");
+        Path path = runContext.workingDir().createTempFile(".DockerFile");
         Files.writeString(path, """
                 FROM ubuntu
                 ARG APT_PACKAGES=""
