@@ -147,7 +147,7 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
             builder.withDockerConfig(config.toFile().getAbsolutePath());
         }
 
-        if (this.namespaceFiles != null && this.namespaceFiles.getEnabled()) {
+        if (this.namespaceFiles != null && Boolean.TRUE.equals(this.namespaceFiles.getEnabled())) {
             runContext.storage()
                 .namespace()
                 .findAllFilesMatching(this.namespaceFiles.getInclude(), this.namespaceFiles.getExclude())
