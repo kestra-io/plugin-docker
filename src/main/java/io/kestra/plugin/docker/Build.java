@@ -17,17 +17,14 @@ import io.kestra.core.utils.Rethrow;
 import io.kestra.plugin.scripts.runner.docker.Credentials;
 import io.kestra.plugin.scripts.runner.docker.DockerService;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import jakarta.validation.constraints.NotNull;
+import java.util.*;
 
 @SuperBuilder
 @ToString
@@ -50,6 +47,7 @@ import jakarta.validation.constraints.NotNull;
                 "- linux/amd64",
                 "tags:",
                 "- private-registry.io/unit-test:latest",
+                "protocol: HTTPS",
                 "buildArgs:",
                 "  APT_PACKAGES: curl",
                 "labels:",
@@ -63,6 +61,19 @@ import jakarta.validation.constraints.NotNull;
     }
 )
 public class Build extends Task implements RunnableTask<Build.Output>, NamespaceFilesInterface, InputFilesInterface {
+
+    @Getter
+    @RequiredArgsConstructor
+    public enum Protocol {
+
+        HTTP, HTTPS;
+
+        @Override
+        public String toString() {
+            return super.name().toLowerCase(Locale.ROOT);
+        }
+    }
+
     @Schema(
         title = "The URI of your Docker host e.g. localhost"
     )
@@ -129,6 +140,13 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
     private NamespaceFiles namespaceFiles;
 
     private Object inputFiles;
+
+    @Schema(
+        title = "The protocol to use for pushing the image to the container registry (HTTP or HTTPS)."
+    )
+    @PluginProperty
+    @Builder.Default
+    private Protocol protocol = Protocol.HTTPS;
 
     @Override
     public Output run(RunContext runContext) throws Exception {
@@ -198,8 +216,12 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
                 .awaitImageId();
 
             if (this.push) {
-                for(String tag : tags){
-                    PushResponseItemCallback resultPush = dockerClient.pushImageCmd(tag)
+                for (String tag : tags) {
+                    String protocol = this.protocol.toString();
+
+                    String fullTag = tag.contains("://") ? tag : protocol + "://" + tag;
+
+                    PushResponseItemCallback resultPush = dockerClient.pushImageCmd(fullTag)
                         .exec(new PushResponseItemCallback(runContext));
 
                     resultPush.awaitCompletion();
