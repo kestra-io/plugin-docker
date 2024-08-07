@@ -64,6 +64,7 @@ class BuildTest {
             .buildArgs(Map.of("APT_PACKAGES", "curl"))
             .labels(Map.of("unit-test", "true"))
             .tags(Set.of("unit-test"))
+            .protocol(Build.Protocol.HTTP)
             .dockerfile(path.getFileName().toString())
             .build();
 
