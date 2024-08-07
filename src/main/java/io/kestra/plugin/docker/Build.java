@@ -217,11 +217,7 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
 
             if (this.push) {
                 for (String tag : tags) {
-                    String registry = this.credentials.getRegistry();
                     String protocol = this.protocol.toString();
-                    if (!protocol.equals("http") && !protocol.equals("https")) {
-                        throw new IllegalArgumentException("Invalid protocol: " + protocol + ". Only HTTP and HTTPS are supported.");
-                    }
 
                     String fullTag = tag.contains("://") ? tag : protocol + "://" + tag;
 
