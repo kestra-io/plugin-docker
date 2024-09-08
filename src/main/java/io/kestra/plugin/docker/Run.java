@@ -30,18 +30,32 @@ import java.util.Map;
     examples = {
         @Example(
             title = "Run the docker/whalesay container with the command 'cowsay hello'",
-            code = {"""
-                containerImage: docker/whalesay
-                commands:
-                  - cowsay
-                  - hello"""
-            }
+            full = true,
+            code = """
+                id: docker_run
+                namespace: company.team
+
+                tasks:
+                  - id: run
+                    type: io.kestra.plugin.docker.Run
+                    containerImage: docker/whalesay
+                    commands:
+                      - cowsay
+                      - hello
+                """
         ),
         @Example(
             title = "Run the docker/whalesay container with no command",
-            code = {"""
-                containerImage: docker/whalesay"""
-            }
+            full = true,
+            code = """
+                id: docker_run
+                namespace: company.team
+
+                tasks:
+                  - id: run
+                    type: io.kestra.plugin.docker.Run
+                    containerImage: docker/whalesay
+                """
         )
     }
 )
