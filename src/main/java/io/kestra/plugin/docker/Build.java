@@ -38,25 +38,32 @@ import java.util.*;
     examples = {
         @Example(
             title = "Build and push a Docker image to a registry",
-            code = {"dockerfile: |",
-                "  FROM ubuntu",
-                "  ARG APT_PACKAGES=\"\"",
-                "",
-                "  RUN apt-get update && apt-get install -y --no-install-recommends ${APT_PACKAGES};",
-                "platforms:",
-                "- linux/amd64",
-                "tags:",
-                "- private-registry.io/unit-test:latest",
-                "protocol: HTTPS",
-                "buildArgs:",
-                "  APT_PACKAGES: curl",
-                "labels:",
-                "  unit-test: \"true\"",
-                "credentials:",
-                "  registry: <registry.url.com>",
-                "  username: <your-user>",
-                "  password: <your-password>",
-            }
+            full = true,
+            code = """
+                id: docker_build
+                namespace: company.team
+
+                tasks:
+                  - id: build
+                    type: io.kestra.plugin.docker.Build
+                    dockerfile: |
+                      FROM ubuntu
+                      ARG APT_PACKAGES=""
+                    
+                      RUN apt-get update && apt-get install -y --no-install-recommends ${APT_PACKAGES};
+                    platforms:
+                      - linux/amd64
+                    tags:
+                      - private-registry.io/unit-test:latest
+                    buildArgs:
+                      APT_PACKAGES: curl
+                    labels:
+                      unit-test: "true"
+                    credentials:
+                      registry: <registry.url.com>
+                      username: <your-user>
+                      password: <your-password>
+                """
         ),
     }
 )
