@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @SuperBuilder
 @ToString
@@ -49,7 +50,7 @@ import java.util.*;
                     dockerfile: |
                       FROM ubuntu
                       ARG APT_PACKAGES=""
-                    
+                
                       RUN apt-get update && apt-get install -y --no-install-recommends ${APT_PACKAGES};
                     platforms:
                       - linux/amd64
@@ -68,18 +69,6 @@ import java.util.*;
     }
 )
 public class Build extends Task implements RunnableTask<Build.Output>, NamespaceFilesInterface, InputFilesInterface {
-
-    @Getter
-    @RequiredArgsConstructor
-    public enum Protocol {
-
-        HTTP, HTTPS;
-
-        @Override
-        public String toString() {
-            return super.name().toLowerCase(Locale.ROOT);
-        }
-    }
 
     @Schema(
         title = "The URI of your Docker host e.g. localhost"
@@ -120,7 +109,9 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
     private Boolean pull = true;
 
     @Schema(
-        title = "The list of tag of this image."
+        title = "The list of tag of this image.",
+        description = "If pushing to a custom registry, the tag should include the registry URL. " +
+            "Note that if you want to push to an insecure registry (HTTP), you need to edit the `/etc/docker/daemon.json` file on your Kestra host to [this](https://gist.github.com/brian-mulier-p/0c5a0ae85e83a179d6e93b22cb471934) and restart docker service (`sudo systemctl daemon-reload && sudo systemctl restart docker`)."
     )
     @PluginProperty(dynamic = true)
     @NotNull
@@ -148,18 +139,11 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
 
     private Object inputFiles;
 
-    @Schema(
-        title = "The protocol to use for pushing the image to the container registry (HTTP or HTTPS)."
-    )
-    @PluginProperty
-    @Builder.Default
-    private Protocol protocol = Protocol.HTTPS;
-
     @Override
     public Output run(RunContext runContext) throws Exception {
         DefaultDockerClientConfig.Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder()
             .withDockerHost(DockerService.findHost(runContext, this.host));
-        Set<String> tags = runContext.render(this.tags);
+        Set<String> tags = runContext.render(this.tags).stream().map(this::removeScheme).collect(Collectors.toSet());
 
         if (this.getCredentials() != null) {
             Path config = DockerService.createConfig(
@@ -206,9 +190,7 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
                 runContext.render(this.platforms).forEach(buildImageCmd::withPlatform);
             }
 
-            if (this.tags != null) {
-                buildImageCmd.withTags(tags);
-            }
+            buildImageCmd.withTags(tags);
 
             if (this.buildArgs != null) {
                 runContext.renderMap(this.buildArgs).forEach(buildImageCmd::withBuildArg);
@@ -224,11 +206,7 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
 
             if (this.push) {
                 for (String tag : tags) {
-                    String protocol = this.protocol.toString();
-
-                    String fullTag = tag.contains("://") ? tag : protocol + "://" + tag;
-
-                    PushResponseItemCallback resultPush = dockerClient.pushImageCmd(fullTag)
+                    PushResponseItemCallback resultPush = dockerClient.pushImageCmd(tag)
                         .exec(new PushResponseItemCallback(runContext));
 
                     resultPush.awaitCompletion();
@@ -245,6 +223,10 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
         }
     }
 
+    private String removeScheme(String string) {
+        return string.contains("://") ? string.split("://")[1] : string;
+    }
+
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
@@ -255,7 +237,7 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
     }
 
     @Getter
-    public static class PushResponseItemCallback extends ResultCallback.Adapter<PushResponseItem>  {
+    public static class PushResponseItemCallback extends ResultCallback.Adapter<PushResponseItem> {
         private final RunContext runContext;
         private Exception error;
 
