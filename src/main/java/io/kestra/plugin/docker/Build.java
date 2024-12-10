@@ -10,6 +10,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
@@ -50,7 +51,7 @@ import java.util.stream.Collectors;
                     dockerfile: |
                       FROM ubuntu
                       ARG APT_PACKAGES=""
-                
+
                       RUN apt-get update && apt-get install -y --no-install-recommends ${APT_PACKAGES};
                     platforms:
                       - linux/amd64
@@ -73,8 +74,7 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
     @Schema(
         title = "The URI of your Docker host e.g. localhost"
     )
-    @PluginProperty(dynamic = true)
-    private String host;
+    private Property<String> host;
 
     @Schema(
         title = "Credentials to push your image to a container registry."
@@ -85,55 +85,42 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
     @Schema(
         title = "The contents of your Dockerfile passed as a string, or a path to the Dockerfile"
     )
-    @PluginProperty(dynamic = true)
-    private String dockerfile;
+    private Property<String> dockerfile;
 
     @Schema(
         title = "The target platform for the image e.g. linux/amd64."
     )
-    @PluginProperty(dynamic = true)
-    private List<String> platforms;
+    private Property<List<String>> platforms;
 
     @Schema(
         title = "Whether to push the image to a remote container registry."
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private Boolean push = false;
+    private Property<Boolean> push = Property.of(false);
 
     @Schema(
         title = "Always attempt to pull the latest version of the base image."
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private Boolean pull = true;
+    private Property<Boolean> pull = Property.of(true);
 
     @Schema(
         title = "The list of tag of this image.",
         description = "If pushing to a custom registry, the tag should include the registry URL. " +
             "Note that if you want to push to an insecure registry (HTTP), you need to edit the `/etc/docker/daemon.json` file on your Kestra host to [this](https://gist.github.com/brian-mulier-p/0c5a0ae85e83a179d6e93b22cb471934) and restart docker service (`sudo systemctl daemon-reload && sudo systemctl restart docker`)."
     )
-    @PluginProperty(dynamic = true)
     @NotNull
-    private Set<String> tags;
+    private Property<List<String>> tags;
 
     @Schema(
         title = "Optional build arguments in a `key: value` format."
     )
-    @PluginProperty(
-        additionalProperties = String.class,
-        dynamic = true
-    )
-    protected Map<String, String> buildArgs;
+    protected Property<Map<String, String>> buildArgs;
 
     @Schema(
         title = "Additional metadata for the image in a `key: value` format."
     )
-    @PluginProperty(
-        additionalProperties = String.class,
-        dynamic = true
-    )
-    protected Map<String, String> labels;
+    protected Property<Map<String, String>> labels;
 
     private NamespaceFiles namespaceFiles;
 
@@ -142,8 +129,9 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
     @Override
     public Output run(RunContext runContext) throws Exception {
         DefaultDockerClientConfig.Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder()
-            .withDockerHost(DockerService.findHost(runContext, this.host));
-        Set<String> tags = runContext.render(this.tags).stream().map(this::removeScheme).collect(Collectors.toSet());
+            .withDockerHost(DockerService.findHost(runContext, runContext.render(this.host).as(String.class).orElse(null)));
+        List<String> renderedTags = runContext.render(this.tags).asList(String.class).isEmpty() ? new ArrayList<>() :  runContext.render(this.tags).asList(String.class);
+        Set<String> tags = renderedTags.stream().map(this::removeScheme).collect(Collectors.toSet());
 
         if (this.getCredentials() != null) {
             Path config = DockerService.createConfig(
@@ -172,10 +160,10 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
 
         try (DockerClient dockerClient = DockerService.client(builder.build())) {
             BuildImageCmd buildImageCmd = dockerClient.buildImageCmd()
-                .withPull(this.pull);
+                .withPull(runContext.render(this.pull).as(Boolean.class).orElseThrow());
 
             Path path = runContext.workingDir().path();
-            String dockerfile = runContext.render(this.dockerfile);
+            String dockerfile = runContext.render(this.dockerfile).as(String.class).orElse(null);
             Path dockerFile;
 
             if (path.resolve(dockerfile).toFile().exists()) {
@@ -186,25 +174,28 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
 
             buildImageCmd.withDockerfile(dockerFile.toFile());
 
-            if (this.platforms != null) {
-                runContext.render(this.platforms).forEach(buildImageCmd::withPlatform);
+            List<String> renderedPlatforms = runContext.render(platforms).asList(String.class);
+            if (!renderedPlatforms.isEmpty()) {
+                renderedPlatforms.forEach(buildImageCmd::withPlatform);
             }
 
             buildImageCmd.withTags(tags);
 
-            if (this.buildArgs != null) {
-                runContext.renderMap(this.buildArgs).forEach(buildImageCmd::withBuildArg);
+            var renderedArgs = runContext.render(this.buildArgs).asMap(String.class, String.class);
+            if (!renderedArgs.isEmpty()) {
+                renderedArgs.forEach(buildImageCmd::withBuildArg);
             }
 
-            if (this.labels != null) {
-                buildImageCmd.withLabels(runContext.renderMap(this.labels));
+            var renderedLabel = runContext.render(this.labels).asMap(String.class, String.class);
+            if (!renderedLabel.isEmpty()) {
+                buildImageCmd.withLabels(renderedLabel);
             }
 
             String imageId = buildImageCmd
                 .exec(new BuildImageResultCallback(runContext))
                 .awaitImageId();
 
-            if (this.push) {
+            if (runContext.render(this.push).as(Boolean.class).orElseThrow()) {
                 for (String tag : tags) {
                     PushResponseItemCallback resultPush = dockerClient.pushImageCmd(tag)
                         .exec(new PushResponseItemCallback(runContext));

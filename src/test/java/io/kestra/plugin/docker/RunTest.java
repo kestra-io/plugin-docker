@@ -1,6 +1,7 @@
 package io.kestra.plugin.docker;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.TestsUtils;
@@ -26,7 +27,7 @@ class RunTest {
             .id("run")
             .type(Run.class.getName())
             .containerImage("ubuntu")
-            .commands(List.of("echo", "here"))
+            .commands(Property.of(List.of("echo", "here")))
             .build();
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
 

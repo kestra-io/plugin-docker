@@ -3,6 +3,7 @@ package io.kestra.plugin.docker;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.runners.RunContext;
@@ -14,9 +15,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @SuperBuilder
 @ToString
@@ -63,8 +62,7 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
     @Schema(
         title = "Docker API URI."
     )
-    @PluginProperty(dynamic = true)
-    private String host;
+    private Property<String> host;
 
     @Schema(
         title = "Docker configuration file.",
@@ -90,26 +88,22 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
     @Schema(
         title = "User in the Docker container."
     )
-    @PluginProperty(dynamic = true)
-    protected String user;
+    protected Property<String> user;
 
     @Schema(
         title = "Docker entrypoint to use."
     )
-    @PluginProperty(dynamic = true)
-    protected List<String> entryPoint;
+    protected Property<List<String>> entryPoint;
 
     @Schema(
         title = "Extra hostname mappings to the container network interface configuration."
     )
-    @PluginProperty(dynamic = true)
-    protected List<String> extraHosts;
+    protected Property<List<String>> extraHosts;
 
     @Schema(
         title = "Docker network mode to use e.g. `host`, `none`, etc."
     )
-    @PluginProperty(dynamic = true)
-    protected String networkMode;
+    protected Property<String> networkMode;
 
     @Schema(
         title = "List of volumes to mount.",
@@ -117,15 +111,14 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
             "Volumes mount are disabled by default for security reasons; you must enable them on server configuration by setting `kestra.tasks.scripts.docker.volume-enabled` to `true`."
     )
     @PluginProperty(dynamic = true)
-    protected List<String> volumes;
+    protected Property<List<String>> volumes;
 
     @Schema(
         title = "The pull policy for an image.",
         description = "Pull policy can be used to prevent pulling of an already existing image `IF_NOT_PRESENT`, or can be set to `ALWAYS` to pull the latest version of the image even if an image with the same tag already exists."
     )
-    @PluginProperty
     @Builder.Default
-    protected PullPolicy pullPolicy = PullPolicy.ALWAYS;
+    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.ALWAYS);
 
     @Schema(
         title = "A list of device requests to be sent to device drivers."
@@ -156,24 +149,18 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
         title = "Size of `/dev/shm` in bytes.",
         description = "The size must be greater than 0. If omitted, the system uses 64MB."
     )
-    @PluginProperty(dynamic = true)
-    private String shmSize;
+    private Property<String> shmSize;
 
     @Schema(
         title = "Additional environment variables for the Docker container."
     )
-    @PluginProperty(
-        additionalProperties = String.class,
-        dynamic = true
-    )
-    private Map<String, String> env;
+    private Property<Map<String, String>> env;
 
     @Builder.Default
     @Schema(
         title = "Whether to set the task state to `WARNING` if any `stdErr` is emitted."
     )
-    @PluginProperty
-    private Boolean warningOnStdErr = true;
+    private Property<Boolean> warningOnStdErr = Property.of(true);
 
     private NamespaceFiles namespaceFiles;
 
@@ -186,37 +173,37 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
     )
     @PluginProperty(dynamic = true)
     @Builder.Default
-    private List<String> commands = Collections.emptyList();
+    private Property<List<String>> commands = Property.of(new ArrayList<>());
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
         TaskRunner taskRunner = Docker
             .builder()
             .type(Docker.class.getName())
-            .host(this.host)
+            .host(runContext.render(this.host).as(String.class).orElse(null))
             .config(this.config)
             .credentials(this.credentials)
-            .user(this.user)
-            .entryPoint(this.entryPoint)
-            .extraHosts(this.extraHosts)
-            .networkMode(this.networkMode)
-            .volumes(this.volumes)
-            .pullPolicy(this.pullPolicy)
+            .user(runContext.render(this.user).as(String.class).orElse(null))
+            .entryPoint(runContext.render(this.entryPoint).asList(String.class).isEmpty() ? null : runContext.render(this.entryPoint).asList(String.class))
+            .extraHosts(runContext.render(this.extraHosts).asList(String.class).isEmpty() ? null : runContext.render(this.extraHosts).asList(String.class))
+            .networkMode(runContext.render(this.networkMode).as(String.class).orElse(null))
+            .volumes(runContext.render(this.volumes).asList(String.class).isEmpty() ? null : runContext.render(this.volumes).asList(String.class))
+            .pullPolicy(runContext.render(this.pullPolicy).as(PullPolicy.class).orElseThrow())
             .deviceRequests(this.deviceRequests)
             .cpu(this.cpu)
             .memory(this.memory)
-            .shmSize(this.shmSize)
+            .shmSize(runContext.render(this.shmSize).as(String.class).orElse(null))
             .build();
 
         var commandWrapper = new CommandsWrapper(runContext)
-            .withEnv(this.getEnv())
+            .withEnv(runContext.render(this.getEnv()).asMap(String.class, String.class).isEmpty() ? new HashMap<>() : runContext.render(this.getEnv()).asMap(String.class, String.class))
             .withContainerImage(this.containerImage)
             .withTaskRunner(taskRunner)
-            .withWarningOnStdErr(this.getWarningOnStdErr())
+            .withWarningOnStdErr(runContext.render(this.getWarningOnStdErr()).as(Boolean.class).orElseThrow())
             .withNamespaceFiles(this.namespaceFiles)
             .withInputFiles(this.inputFiles)
             .withOutputFiles(this.outputFiles)
-            .withCommands(this.commands);
+            .withCommands(runContext.render(this.commands).asList(String.class).isEmpty() ? null : runContext.render(this.commands).asList(String.class));
 
         return commandWrapper.run();
     }
