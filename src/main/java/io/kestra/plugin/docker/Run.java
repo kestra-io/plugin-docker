@@ -166,7 +166,7 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
 
     private Object inputFiles;
 
-    private List<String> outputFiles;
+    private Property<List<String>> outputFiles;
 
     @Schema(
         title = "The commands to run"
@@ -195,6 +195,7 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
             .shmSize(runContext.render(this.shmSize).as(String.class).orElse(null))
             .build();
 
+        var renderedOutputFiles = runContext.render(this.outputFiles).asList(String.class);
         var commandWrapper = new CommandsWrapper(runContext)
             .withEnv(runContext.render(this.getEnv()).asMap(String.class, String.class).isEmpty() ? new HashMap<>() : runContext.render(this.getEnv()).asMap(String.class, String.class))
             .withContainerImage(this.containerImage)
@@ -202,7 +203,7 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
             .withWarningOnStdErr(runContext.render(this.getWarningOnStdErr()).as(Boolean.class).orElseThrow())
             .withNamespaceFiles(this.namespaceFiles)
             .withInputFiles(this.inputFiles)
-            .withOutputFiles(this.outputFiles)
+            .withOutputFiles(renderedOutputFiles.isEmpty() ? null : renderedOutputFiles)
             .withCommands(runContext.render(this.commands).asList(String.class).isEmpty() ? null : runContext.render(this.commands).asList(String.class));
 
         return commandWrapper.run();
