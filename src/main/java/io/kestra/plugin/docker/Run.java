@@ -152,6 +152,11 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
     private Property<String> shmSize;
 
     @Schema(
+        title = "Give extended privileges to this container."
+    )
+    private Property<Boolean> privileged;
+
+    @Schema(
         title = "Additional environment variables for the Docker container."
     )
     private Property<Map<String, String>> env;
@@ -193,6 +198,7 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
             .cpu(this.cpu)
             .memory(this.memory)
             .shmSize(runContext.render(this.shmSize).as(String.class).orElse(null))
+            .privileged(runContext.render(this.privileged).as(Boolean.class).orElse(null))
             .build();
 
         var renderedOutputFiles = runContext.render(this.outputFiles).asList(String.class);
