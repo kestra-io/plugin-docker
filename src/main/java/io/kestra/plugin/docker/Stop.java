@@ -8,6 +8,7 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.scripts.runner.docker.DockerService;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -45,12 +46,13 @@ public class Stop extends AbstractDocker implements RunnableTask<VoidOutput> {
 
     @Schema(title = "Does a kill or a stop command will be used.")
     @Builder.Default
+    @NotNull
     private Property<Boolean> kill = Property.of(false);
-
 
     @Schema(title = "Does we will remove the container.")
     @Builder.Default
-    private Property<Boolean> remove = Property.of(true);
+    @NotNull
+    private Property<Boolean> delete = Property.of(true);
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
@@ -61,7 +63,7 @@ public class Stop extends AbstractDocker implements RunnableTask<VoidOutput> {
                 client.killContainerCmd(runContext.render(containerId).as(String.class).orElseThrow()).exec();
             }
 
-            if (runContext.render(remove).as(Boolean.class).orElseThrow()) {
+            if (runContext.render(delete).as(Boolean.class).orElseThrow()) {
                 client.removeContainerCmd(runContext.render(containerId).as(String.class).orElseThrow()).exec();
             }
         }
