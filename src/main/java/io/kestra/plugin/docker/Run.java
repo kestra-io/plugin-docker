@@ -58,26 +58,7 @@ import java.util.*;
         )
     }
 )
-public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
-    @Schema(
-        title = "Docker API URI."
-    )
-    private Property<String> host;
-
-    @Schema(
-        title = "Docker configuration file.",
-        description = "Docker configuration file that can set access credentials to private container registries. Usually located in `~/.docker/config.json`.",
-        anyOf = {String.class, Map.class}
-    )
-    @PluginProperty(dynamic = true)
-    private Object config;
-
-    @Schema(
-        title = "Credentials for a private container registry."
-    )
-    @PluginProperty(dynamic = true)
-    private Credentials credentials;
-
+public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
     @Schema(
         title = "Docker image to use."
     )
@@ -104,6 +85,16 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
         title = "Docker network mode to use e.g. `host`, `none`, etc."
     )
     protected Property<String> networkMode;
+
+    @Schema(
+        title = "List of port bindings.",
+        description = "Corresponds to the --publish (-p) option of the docker run CLI command using the format `ip:dockerHostPort:containerPort/protocol`. Possible example : \n" +
+            "- 8080:80/udp" +
+            "- 127.0.0.1:8080:80" +
+            "- 127.0.0.1:8080:80/udp"
+    )
+    @PluginProperty(dynamic = true)
+    protected Property<List<String>> portBindings;
 
     @Schema(
         title = "List of volumes to mount.",
@@ -180,9 +171,16 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
     @Builder.Default
     private Property<List<String>> commands = Property.of(new ArrayList<>());
 
+    @Builder.Default
+    @Schema(
+        title = "Whether to wait for the container to exit, or simply start it."
+    )
+    @PluginProperty
+    private final Boolean wait = true;
+
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
-        TaskRunner taskRunner = Docker
+        TaskRunner<Docker.DockerTaskRunnerDetailResult> taskRunner = Docker
             .builder()
             .type(Docker.class.getName())
             .host(runContext.render(this.host).as(String.class).orElse(null))
@@ -192,6 +190,7 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
             .entryPoint(runContext.render(this.entryPoint).asList(String.class).isEmpty() ? null : runContext.render(this.entryPoint).asList(String.class))
             .extraHosts(runContext.render(this.extraHosts).asList(String.class).isEmpty() ? null : runContext.render(this.extraHosts).asList(String.class))
             .networkMode(runContext.render(this.networkMode).as(String.class).orElse(null))
+            .portBindings(runContext.render(this.portBindings).asList(String.class))
             .volumes(runContext.render(this.volumes).asList(String.class).isEmpty() ? null : runContext.render(this.volumes).asList(String.class))
             .pullPolicy(runContext.render(this.pullPolicy).as(PullPolicy.class).orElseThrow())
             .deviceRequests(this.deviceRequests)
@@ -199,6 +198,7 @@ public class Run extends Task implements RunnableTask<ScriptOutput>, NamespaceFi
             .memory(this.memory)
             .shmSize(runContext.render(this.shmSize).as(String.class).orElse(null))
             .privileged(runContext.render(this.privileged).as(Boolean.class).orElse(null))
+            .wait(wait)
             .build();
 
         var renderedOutputFiles = runContext.render(this.outputFiles).asList(String.class);
