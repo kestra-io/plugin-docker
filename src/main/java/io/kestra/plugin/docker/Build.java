@@ -69,19 +69,7 @@ import java.util.stream.Collectors;
         ),
     }
 )
-public class Build extends Task implements RunnableTask<Build.Output>, NamespaceFilesInterface, InputFilesInterface {
-
-    @Schema(
-        title = "The URI of your Docker host e.g. localhost"
-    )
-    private Property<String> host;
-
-    @Schema(
-        title = "Credentials to push your image to a container registry."
-    )
-    @PluginProperty
-    private Credentials credentials;
-
+public class Build extends AbstractDocker implements RunnableTask<Build.Output>, NamespaceFilesInterface, InputFilesInterface {
     @Schema(
         title = "The contents of your Dockerfile passed as a string, or a path to the Dockerfile"
     )
@@ -128,21 +116,8 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        DefaultDockerClientConfig.Builder builder = DefaultDockerClientConfig.createDefaultConfigBuilder()
-            .withDockerHost(DockerService.findHost(runContext, runContext.render(this.host).as(String.class).orElse(null)));
         List<String> renderedTags = runContext.render(this.tags).asList(String.class).isEmpty() ? new ArrayList<>() :  runContext.render(this.tags).asList(String.class);
         Set<String> tags = renderedTags.stream().map(this::removeScheme).collect(Collectors.toSet());
-
-        if (this.getCredentials() != null) {
-            Path config = DockerService.createConfig(
-                runContext,
-                Map.of(),
-                List.of(this.getCredentials()),
-                tags.iterator().next()
-            );
-
-            builder.withDockerConfig(config.toFile().getAbsolutePath());
-        }
 
         if (this.namespaceFiles != null && Boolean.TRUE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
             runContext.storage()
@@ -161,12 +136,19 @@ public class Build extends Task implements RunnableTask<Build.Output>, Namespace
             FilesService.inputFiles(runContext, this.inputFiles);
         }
 
-        try (DockerClient dockerClient = DockerService.client(builder.build())) {
+        try (
+            DockerClient dockerClient = DockerService.client(
+            runContext,
+            runContext.render(this.host).as(String.class).orElse(null),
+            this.getConfig(),
+            this.getCredentials(),
+            tags.iterator().next()
+        )) {
             BuildImageCmd buildImageCmd = dockerClient.buildImageCmd()
                 .withPull(runContext.render(this.pull).as(Boolean.class).orElseThrow());
 
             Path path = runContext.workingDir().path();
-            String dockerfile = runContext.render(this.dockerfile).as(String.class).orElse(null);
+            String dockerfile = runContext.render(this.dockerfile).as(String.class).orElseThrow();
             Path dockerFile;
 
             if (path.resolve(dockerfile).toFile().exists()) {
