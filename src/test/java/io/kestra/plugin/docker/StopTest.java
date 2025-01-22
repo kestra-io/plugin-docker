@@ -25,8 +25,8 @@ class StopTest {
         Run run = Run.builder()
             .id("run")
             .type(Run.class.getName())
-            .containerImage("redis")
-            .wait(false)
+            .containerImage(Property.of("redis"))
+            .wait(Property.of(false))
             .build();
         RunContext runRunContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
 
