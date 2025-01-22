@@ -11,7 +11,7 @@ import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import io.kestra.plugin.scripts.runner.docker.*;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -62,9 +62,8 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     @Schema(
         title = "Docker image to use."
     )
-    @PluginProperty(dynamic = true)
-    @NotEmpty
-    protected String containerImage;
+    @NotNull
+    protected Property<String> containerImage;
 
     @Schema(
         title = "User in the Docker container."
@@ -98,8 +97,12 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
 
     @Schema(
         title = "List of volumes to mount.",
-        description = "Must be a valid mount expression as string, example : `/home/user:/app`.\n\n" +
-            "Volumes mount are disabled by default for security reasons; you must enable them on server configuration by setting `kestra.tasks.scripts.docker.volume-enabled` to `true`."
+        description = """
+            Must be a valid mount expression as string, example : `/home/user:/app`.
+
+
+            Volumes mount are disabled by default for security reasons; you must enable them on server configuration by setting `kestra.tasks.scripts.docker.volume-enabled` to `true`.
+            """
     )
     @PluginProperty(dynamic = true)
     protected Property<List<String>> volumes;
@@ -167,7 +170,6 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     @Schema(
         title = "The commands to run"
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
     private Property<List<String>> commands = Property.of(new ArrayList<>());
 
@@ -175,8 +177,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     @Schema(
         title = "Whether to wait for the container to exit, or simply start it."
     )
-    @PluginProperty
-    private final Boolean wait = true;
+    private final Property<Boolean> wait = Property.of(true);
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
@@ -192,19 +193,19 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
             .networkMode(runContext.render(this.networkMode).as(String.class).orElse(null))
             .portBindings(runContext.render(this.portBindings).asList(String.class))
             .volumes(runContext.render(this.volumes).asList(String.class).isEmpty() ? null : runContext.render(this.volumes).asList(String.class))
-            .pullPolicy(runContext.render(this.pullPolicy).as(PullPolicy.class).orElseThrow())
+            .pullPolicy(this.pullPolicy)
             .deviceRequests(this.deviceRequests)
             .cpu(this.cpu)
             .memory(this.memory)
             .shmSize(runContext.render(this.shmSize).as(String.class).orElse(null))
-            .privileged(runContext.render(this.privileged).as(Boolean.class).orElse(null))
+            .privileged(this.privileged)
             .wait(wait)
             .build();
 
         var renderedOutputFiles = runContext.render(this.outputFiles).asList(String.class);
         var commandWrapper = new CommandsWrapper(runContext)
             .withEnv(runContext.render(this.getEnv()).asMap(String.class, String.class).isEmpty() ? new HashMap<>() : runContext.render(this.getEnv()).asMap(String.class, String.class))
-            .withContainerImage(this.containerImage)
+            .withContainerImage(runContext.render(this.containerImage).as(String.class).orElseThrow())
             .withTaskRunner(taskRunner)
             .withWarningOnStdErr(runContext.render(this.getWarningOnStdErr()).as(Boolean.class).orElseThrow())
             .withNamespaceFiles(this.namespaceFiles)

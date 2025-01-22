@@ -26,7 +26,7 @@ class RunTest {
         Run run = Run.builder()
             .id("run")
             .type(Run.class.getName())
-            .containerImage("ubuntu")
+            .containerImage(Property.of("ubuntu"))
             .commands(Property.of(List.of("echo", "here")))
             .build();
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
