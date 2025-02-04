@@ -66,8 +66,27 @@ import java.util.*;
                 tasks:
                   - id: write
                     type: io.kestra.plugin.core.storage.Write
-                    content: "extensions:\\n  health_check: {}\\n\\nreceivers:\\n  otlp:\\n    protocols:\\n      grpc:\\n        endpoint: 0.0.0.0:4317\\n      http:\\n        endpoint: 0.0.0.0:4318\\n\\nexporters:\\n  debug: {}\\n\\nservice:\\n  pipelines:\\n    logs:\\n      receivers: [otlp]\\n      exporters: [debug]"
-                    extension: .yaml
+                       content: |
+                         extensions:
+                           health_check: {}
+
+                         receivers:
+                           otlp:
+                             protocols:
+                               grpc:
+                                 endpoint: 0.0.0.0:4317
+                               http:
+                                 endpoint: 0.0.0.0:4318
+
+                         exporters:
+                           debug: {}
+
+                         service:
+                           pipelines:
+                             logs:
+                               receivers: [otlp]
+                               exporters: [debug]
+                       extension: .yaml
 
                   - id: run
                     type: io.kestra.plugin.docker.Run
