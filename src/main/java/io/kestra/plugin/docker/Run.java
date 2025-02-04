@@ -78,7 +78,7 @@ import java.util.*;
                       - --config
                       - otel.yaml
                     portBindings:
-                      - "{{ outputs.init.values.randomPort }}:4318"
+                      - "4318:4318"
                     wait: false
                 """
         ),
