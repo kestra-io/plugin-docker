@@ -55,7 +55,52 @@ import java.util.*;
                     type: io.kestra.plugin.docker.Run
                     containerImage: docker/whalesay
                 """
-        )
+        ),
+        @Example(
+            title = "Run the docker/opentelemetry with commands and config file",
+            full = true,
+            code = """
+                id: docker_run
+                namespace: company.team
+
+                tasks:
+                  - id: write
+                    type: io.kestra.plugin.core.storage.Write
+                       content: |
+                         extensions:
+                           health_check: {}
+
+                         receivers:
+                           otlp:
+                             protocols:
+                               grpc:
+                                 endpoint: 0.0.0.0:4317
+                               http:
+                                 endpoint: 0.0.0.0:4318
+
+                         exporters:
+                           debug: {}
+
+                         service:
+                           pipelines:
+                             logs:
+                               receivers: [otlp]
+                               exporters: [debug]
+                       extension: .yaml
+
+                  - id: run
+                    type: io.kestra.plugin.docker.Run
+                    containerImage: otel/opentelemetry-collector:latest
+                    inputFiles:
+                      otel.yaml: "{{ outputs.write.uri }}"
+                    commands:
+                      - --config
+                      - otel.yaml
+                    portBindings:
+                      - "4318:4318"
+                    wait: false
+                """
+        ),
     }
 )
 public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
