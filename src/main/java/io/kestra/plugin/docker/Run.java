@@ -17,6 +17,8 @@ import lombok.experimental.SuperBuilder;
 
 import java.util.*;
 
+import static io.kestra.core.utils.Rethrow.throwFunction;
+
 @SuperBuilder
 @ToString
 @EqualsAndHashCode
@@ -226,6 +228,14 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
+        String image = runContext.render(this.containerImage).as(String.class).orElseThrow();
+        String registry = Optional.ofNullable(this.getCredentials())
+            .map(throwFunction(cred -> runContext.render(cred.getRegistry()).as(String.class).orElse(null)))
+            .orElse(null);
+
+        if (registry != null && !image.startsWith(registry)) {
+            image = String.join("/", registry, image);
+        }
         TaskRunner<Docker.DockerTaskRunnerDetailResult> taskRunner = Docker
             .builder()
             .type(Docker.class.getName())
@@ -250,7 +260,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
         var renderedOutputFiles = runContext.render(this.outputFiles).asList(String.class);
         var commandWrapper = new CommandsWrapper(runContext)
             .withEnv(runContext.render(this.getEnv()).asMap(String.class, String.class).isEmpty() ? new HashMap<>() : runContext.render(this.getEnv()).asMap(String.class, String.class))
-            .withContainerImage(runContext.render(this.containerImage).as(String.class).orElseThrow())
+            .withContainerImage(image)
             .withTaskRunner(taskRunner)
             .withWarningOnStdErr(runContext.render(this.getWarningOnStdErr()).as(Boolean.class).orElseThrow())
             .withNamespaceFiles(this.namespaceFiles)
