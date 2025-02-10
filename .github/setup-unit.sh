@@ -15,9 +15,11 @@ docker run -d \
     registry:2.7.0
 
 #Pull image, tag it, then push it to private registry
-docker pull ubuntu
+docker pull ubuntu:20.04
 docker login localhost:5000 -u testuser -p testpassword
-docker tag ubuntu localhost:5000/ubuntu:unit-test
+docker tag ubuntu:20.04 localhost:5000/ubuntu:unit-test
 docker push localhost:5000/ubuntu:unit-test
 
+#Logout
+docker rmi ubuntu:20.04
 docker logout localhost:5000
