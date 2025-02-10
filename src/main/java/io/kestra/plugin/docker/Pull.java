@@ -35,7 +35,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 namespace: company.team
 
                 tasks:
-                  - id: pul
+                  - id: pull_alpine
                     type: io.kestra.plugin.docker.Pull
                     image: alpine:latest
                 """
@@ -51,19 +51,19 @@ public class Pull extends AbstractDocker implements RunnableTask<VoidOutput> {
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        String image = runContext.render(this.image).as(String.class).orElseThrow();
+        String imageToPull = runContext.render(this.image).as(String.class).orElseThrow();
         String registry = Optional.ofNullable(this.getCredentials())
             .map(throwFunction(cred -> runContext.render(cred.getRegistry()).as(String.class).orElse(null)))
             .orElse(null);
 
-        if (registry != null && !image.startsWith(registry)) {
-            image = String.join("/", registry, image);
+        if (registry != null && !imageToPull.startsWith(registry)) {
+            imageToPull = String.join("/", registry, imageToPull);
         }
 
-        try (var client = DockerService.client(runContext, runContext.render(host).as(String.class).orElse(null), config, credentials, image)) {
-            client.pullImageCmd(image).exec(new PullImageResultCallback()).awaitCompletion();
+        try (var client = DockerService.client(runContext, runContext.render(host).as(String.class).orElse(null), config, credentials, imageToPull)) {
+            client.pullImageCmd(imageToPull).exec(new PullImageResultCallback()).awaitCompletion();
         }
-        runContext.logger().info("Successfully pulled image {}", image);
+        runContext.logger().info("Successfully pulled image {}", imageToPull);
         return null;
     }
 }
