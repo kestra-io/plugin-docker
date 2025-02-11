@@ -162,10 +162,11 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
 
     @Schema(
         title = "List of port bindings.",
-        description = "Corresponds to the --publish (-p) option of the docker run CLI command using the format `ip:dockerHostPort:containerPort/protocol`. Possible example : \n" +
-            "- 8080:80/udp" +
-            "- 127.0.0.1:8080:80" +
-            "- 127.0.0.1:8080:80/udp"
+        description = "Corresponds to the `--publish` (`-p`) option of the docker run CLI command using the format `ip:dockerHostPort:containerPort/protocol`. \n" +
+            "Possible example :\n" +
+            "- `8080:80/udp`" +
+            "- `127.0.0.1:8080:80`" +
+            "- `127.0.0.1:8080:80/udp`"
     )
     @PluginProperty(dynamic = true)
     protected Property<List<String>> portBindings;
@@ -174,7 +175,6 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
         title = "List of volumes to mount.",
         description = """
             Must be a valid mount expression as string, example : `/home/user:/app`.
-
 
             Volumes mount are disabled by default for security reasons; you must enable them on server configuration by setting `kestra.tasks.scripts.docker.volume-enabled` to `true`.
             """
