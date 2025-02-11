@@ -1,5 +1,5 @@
 id: docker_build
-namespace: qa
+namespace: sanitychecks
 
 tasks:
 

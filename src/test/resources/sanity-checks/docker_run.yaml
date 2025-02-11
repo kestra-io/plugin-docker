@@ -1,5 +1,5 @@
 id: docker_run
-namespace: qa
+namespace: sanitychecks
 
 tasks:
   - id: run
