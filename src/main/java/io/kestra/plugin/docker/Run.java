@@ -103,6 +103,34 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     wait: false
                 """
         ),
+        @Example(
+            title = "Run Docker with Ubuntu image, run shell commands to create a file, log the output in Kestra",
+            full = true,
+            code = """
+                id: docker_run_with_output_file
+                namespace: company.team
+
+                inputs:
+                  - id: greetings
+                    type: STRING
+                    defaults: HELLO WORLD !!
+
+                tasks:
+                  - id: docker_run_output_file
+                    type: io.kestra.plugin.docker.Run
+                    containerImage: ubuntu:22.04
+                    commands:
+                      - "/bin/sh"
+                      - "-c"
+                      - echo {{ inputs.greetings }} > file.txt
+                    outputFiles:
+                      - file.txt
+
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ read(outputs.docker_run_output_file.outputFiles['file.txt']) }}"
+                """
+        )
     }
 )
 public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
@@ -217,8 +245,9 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     @Schema(
         title = "The commands to run"
     )
+    @PluginProperty(dynamic = true)
     @Builder.Default
-    private Property<List<String>> commands = Property.of(new ArrayList<>());
+    private List<String> commands = new ArrayList<>();
 
     @Builder.Default
     @Schema(
@@ -266,7 +295,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
             .withNamespaceFiles(this.namespaceFiles)
             .withInputFiles(this.inputFiles)
             .withOutputFiles(renderedOutputFiles.isEmpty() ? null : renderedOutputFiles)
-            .withCommands(runContext.render(this.commands).asList(String.class).isEmpty() ? null : runContext.render(this.commands).asList(String.class));
+            .withCommands(this.commands);
 
         return commandWrapper.run();
     }
