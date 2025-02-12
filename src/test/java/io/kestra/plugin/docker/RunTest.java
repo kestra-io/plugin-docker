@@ -27,7 +27,12 @@ class RunTest {
             .id("run")
             .type(Run.class.getName())
             .containerImage(Property.of("ubuntu"))
-            .commands(Property.of(List.of("echo", "here")))
+            .commands(List.of(
+                "/bin/sh", "-c",
+                "echo", "here",
+                "echo {{ workingDir }} > output.txt",
+                "echo 'Hello World' > output.txt"))
+            .outputFiles(Property.of(List.of("output.txt")))
             .build();
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
 

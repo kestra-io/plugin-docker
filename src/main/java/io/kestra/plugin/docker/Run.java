@@ -55,6 +55,79 @@ import java.util.*;
                     type: io.kestra.plugin.docker.Run
                     containerImage: docker/whalesay
                 """
+        ),
+        @Example(
+            title = "Run the docker/opentelemetry with commands and config file",
+            full = true,
+            code = """
+                id: docker_run
+                namespace: company.team
+
+                tasks:
+                  - id: write
+                    type: io.kestra.plugin.core.storage.Write
+                       content: |
+                         extensions:
+                           health_check: {}
+
+                         receivers:
+                           otlp:
+                             protocols:
+                               grpc:
+                                 endpoint: 0.0.0.0:4317
+                               http:
+                                 endpoint: 0.0.0.0:4318
+
+                         exporters:
+                           debug: {}
+
+                         service:
+                           pipelines:
+                             logs:
+                               receivers: [otlp]
+                               exporters: [debug]
+                       extension: .yaml
+
+                  - id: run
+                    type: io.kestra.plugin.docker.Run
+                    containerImage: otel/opentelemetry-collector:latest
+                    inputFiles:
+                      otel.yaml: "{{ outputs.write.uri }}"
+                    commands:
+                      - --config
+                      - otel.yaml
+                    portBindings:
+                      - "4318:4318"
+                    wait: false
+                """
+        ),
+        @Example(
+            title = "Run Docker with Ubuntu image, run shell commands to create a file, log the output in Kestra",
+            full = true,
+            code = """
+                id: docker_run_with_output_file
+                namespace: company.team
+
+                inputs:
+                  - id: greetings
+                    type: STRING
+                    defaults: HELLO WORLD !!
+
+                tasks:
+                  - id: docker_run_output_file
+                    type: io.kestra.plugin.docker.Run
+                    containerImage: ubuntu:22.04
+                    commands:
+                      - "/bin/sh"
+                      - "-c"
+                      - echo {{ inputs.greetings }} > file.txt
+                    outputFiles:
+                      - file.txt
+
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: "{{ read(outputs.docker_run_output_file.outputFiles['file.txt']) }}"
+                """
         )
     }
 )
@@ -170,8 +243,9 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     @Schema(
         title = "The commands to run"
     )
+    @PluginProperty(dynamic = true)
     @Builder.Default
-    private Property<List<String>> commands = Property.of(new ArrayList<>());
+    private List<String> commands = new ArrayList<>();
 
     @Builder.Default
     @Schema(
@@ -211,7 +285,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
             .withNamespaceFiles(this.namespaceFiles)
             .withInputFiles(this.inputFiles)
             .withOutputFiles(renderedOutputFiles.isEmpty() ? null : renderedOutputFiles)
-            .withCommands(runContext.render(this.commands).asList(String.class).isEmpty() ? null : runContext.render(this.commands).asList(String.class));
+            .withCommands(this.commands);
 
         return commandWrapper.run();
     }
