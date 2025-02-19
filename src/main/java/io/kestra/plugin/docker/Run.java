@@ -245,9 +245,8 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     @Schema(
         title = "The commands to run"
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private List<String> commands = new ArrayList<>();
+    private Property<List<String>> commands = Property.of(new ArrayList<>());
 
     @Builder.Default
     @Schema(

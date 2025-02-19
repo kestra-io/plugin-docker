@@ -32,11 +32,11 @@ class RunTest extends AbstractDockerHelper {
             .id("run")
             .type(Run.class.getName())
             .containerImage(Property.of("ubuntu"))
-            .commands(List.of(
+            .commands(TestsUtils.propertyFromList(List.of(
                 "/bin/sh", "-c",
                 "echo", "here",
                 "echo {{ workingDir }} > output.txt",
-                "echo 'Hello World' > output.txt"))
+                "echo 'Hello World' > output.txt")))
             .outputFiles(Property.of(List.of("output.txt")))
             .build();
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
@@ -61,7 +61,7 @@ class RunTest extends AbstractDockerHelper {
                 .password(Property.of(getPassword()))
                 .registry(Property.of(getRegistry()))
                 .build())
-            .commands(List.of("echo", "here"))
+            .commands(Property.of(List.of("echo", "here")))
             .build();
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
 
@@ -82,7 +82,7 @@ class RunTest extends AbstractDockerHelper {
                 .password(Property.of("incorrectPassword"))
                 .registry(Property.of(getRegistry()))
                 .build())
-            .commands(List.of("echo", "here"))
+            .commands(Property.of(List.of("echo", "here")))
             .build();
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
 
