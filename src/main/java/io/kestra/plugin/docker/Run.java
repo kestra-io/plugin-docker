@@ -211,7 +211,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
             .withNamespaceFiles(this.namespaceFiles)
             .withInputFiles(this.inputFiles)
             .withOutputFiles(renderedOutputFiles.isEmpty() ? null : renderedOutputFiles)
-            .withCommands(runContext.render(this.commands).asList(String.class).isEmpty() ? null : runContext.render(this.commands).asList(String.class));
+            .withCommands(this.commands);
 
         return commandWrapper.run();
     }
