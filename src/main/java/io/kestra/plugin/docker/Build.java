@@ -91,7 +91,7 @@ import java.util.stream.Collectors;
         ),
         @Example(
             full = true,
-            title = "Build a Docker image and push it to GitHub Container Registry (ghcr.io)"
+            title = "Build a Docker image and push it to GitHub Container Registry (ghcr.io)",
             code = """
                 id: build_github_container_image
                 namespace: company.team
