@@ -51,7 +51,6 @@ import java.util.stream.Collectors;
                     dockerfile: |
                       FROM ubuntu
                       ARG APT_PACKAGES=""
-
                       RUN apt-get update && apt-get install -y --no-install-recommends ${APT_PACKAGES};
                     platforms:
                       - linux/amd64
@@ -63,10 +62,55 @@ import java.util.stream.Collectors;
                       unit-test: "true"
                     credentials:
                       registry: <registry.url.com>
-                      username: <your-user>
-                      password: <your-password>
+                      username: "{{ secret('DOCKERHUB_USERNAME') }}"
+                      password: "{{ secret('DOCKERHUB_PASSWORD') }}"
                 """
         ),
+        @Example(
+            full = true,
+            title = "Build and push a docker image to DockerHub",
+            code = """
+                id: build_dockerhub_image
+                namespace: company.team
+                
+                tasks:
+                  - id: build
+                    type: io.kestra.plugin.docker.Build
+                    dockerfile: |
+                      FROM python:3.10
+                      RUN pip install --upgrade pip
+                      RUN pip install --no-cache-dir kestra requests "polars[all]"
+                    tags:
+                      - kestra/polars:latest
+                    push: true
+                    credentials:
+                      registry: https://index.docker.io/v1/
+                      username: "{{ secret('DOCKERHUB_USERNAME') }}"
+                      password: "{{ secret('DOCKERHUB_PASSWORD') }}"
+            """
+        ),
+        @Example(
+            full = true,
+            title = "Build a Docker image and push it to GitHub Container Registry (ghcr.io)"
+            code = """
+                id: build_github_container_image
+                namespace: company.team
+                
+                tasks:
+                  - id: build
+                    type: io.kestra.plugin.docker.Build
+                    dockerfile: |
+                      FROM python:3.10
+                      RUN pip install --upgrade pip
+                      RUN pip install --no-cache-dir kestra requests "polars[all]"
+                    tags:
+                      - ghcr.io/kestra/polars:latest
+                    push: true
+                    credentials:
+                      username: kestra
+                      password: "{{ secret('GITHUB_ACCESS_TOKEN') }}"
+            """
+        )
     }
 )
 public class Build extends AbstractDocker implements RunnableTask<Build.Output>, NamespaceFilesInterface, InputFilesInterface {
