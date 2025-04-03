@@ -110,6 +110,36 @@ import java.util.stream.Collectors;
                       username: kestra
                       password: "{{ secret('GITHUB_ACCESS_TOKEN') }}"
             """
+        ),
+        @Example(
+            full = true,
+            title = "Build a Docker image and use it with Python script using a Docker Task Runner",
+            code = """
+                id: build_task_runner_image
+                namespace: company.team
+                
+                tasks:
+                  - id: build
+                    type: io.kestra.plugin.docker.Build
+                    tags:
+                      - my-py-data-app
+                    dockerfile: |
+                      FROM python:3.12-slim
+                      WORKDIR /app
+                      RUN pip install --no-cache-dir pandas
+                      COPY . /app
+                
+                  - id: python
+                    type: io.kestra.plugin.scripts.python.Commands
+                    containerImage: "{{ outputs.build.imageId }}"
+                    taskRunner:
+                      type: io.kestra.plugin.scripts.runner.docker.Docker
+                      pullPolicy: NEVER
+                    namespaceFiles:
+                      enabled: true
+                    commands:
+                      - python main.py
+            """
         )
     }
 )
