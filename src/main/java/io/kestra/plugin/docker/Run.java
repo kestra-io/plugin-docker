@@ -230,11 +230,11 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     )
     private Property<Map<String, String>> env;
 
-    @Builder.Default
     @Schema(
-        title = "Whether to set the task state to `WARNING` if any `stdErr` is emitted."
+        title = "Not used anymore, will be removed soon"
     )
-    private Property<Boolean> warningOnStdErr = Property.of(true);
+    @Deprecated
+    private Property<Boolean> warningOnStdErr;
 
     private NamespaceFiles namespaceFiles;
 
@@ -290,7 +290,6 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
             .withEnv(runContext.render(this.getEnv()).asMap(String.class, String.class).isEmpty() ? new HashMap<>() : runContext.render(this.getEnv()).asMap(String.class, String.class))
             .withContainerImage(image)
             .withTaskRunner(taskRunner)
-            .withWarningOnStdErr(runContext.render(this.getWarningOnStdErr()).as(Boolean.class).orElseThrow())
             .withNamespaceFiles(this.namespaceFiles)
             .withInputFiles(this.inputFiles)
             .withOutputFiles(renderedOutputFiles.isEmpty() ? null : renderedOutputFiles)
