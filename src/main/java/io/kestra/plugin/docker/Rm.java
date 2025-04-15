@@ -19,7 +19,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Remove a docker image or container"
+    title = "Remove a Docker image or container."
 )
 @Plugin(
     examples = {

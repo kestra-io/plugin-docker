@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Build a Docker image and push it to a remote container registry."
+    title = "Build a Docker image and optionally push it to a remote container registry."
 )
 @Plugin(
     examples = {

@@ -23,7 +23,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Pull a docker image"
+    title = "Pull a Docker image."
 )
 @Plugin(
     examples = {

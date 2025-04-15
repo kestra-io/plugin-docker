@@ -22,8 +22,8 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Prune.",
-    description = "Task to delete unused containers/images/networks/volumes"
+    title = "Prune unused containers, images, networks, volumes.",
+    description = "Use this task to clean your environment and delete unused containers/images/networks/volumes"
 )
 @Plugin(
     examples = {
