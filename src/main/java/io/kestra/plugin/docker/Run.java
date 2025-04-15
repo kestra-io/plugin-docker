@@ -25,7 +25,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run a Docker container"
+    title = "Run a Docker container."
 )
 @Plugin(
     examples = {

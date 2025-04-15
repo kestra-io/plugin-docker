@@ -18,7 +18,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Stop a Docker container"
+    title = "Stop a Docker container."
 )
 @Plugin(
     examples = {
