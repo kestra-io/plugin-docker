@@ -1,0 +1,170 @@
+id: run
+namespace: sanitychecks.plugin-docker
+
+# TODO: Sanity check improvements:
+# - Add a test for the "device request" property (currently unclear what it is or how to test it).
+# - Implement a test for "config" and "credentials" properties for private Docker registries.
+# - Verify that memory and CPU limits are respected and assert their behavior.
+# - Add a test for the "host" property (currently seems to have issues or is bugged).
+
+labels:
+  dependencies.plugins: "[flow.Parallel], [flow.WorkingDirectory], [execution.Assert]"
+  dependencies.features: "[sla], [variables], [pluginDefaults]"
+
+variables:
+  testFileContent: |
+    plouf with some weird chars : $ 	ǳ 	Ǵ 	ǵ 	Ƕ 	Ƿ 	Ǹ 	ǹ 	Ǻ 	ǻ 	Ǽ 	ǽ 	Ǿ 	ǿ Ͳ 	ͳ 	ʹ 	͵ 	Ͷ 	ͷ 	͸ 	͹ 	ͺ
+  testEnvValue: |
+    env_value_check
+  testDynamicCommand: |
+    echo "hello world"
+  testDynamicEntryPoint: ["/bin/sh", "-c"]
+
+sla:
+  - id: shouldNotHaveWaitedForTheWaitTest
+    type: MAX_DURATION
+    duration: PT110S
+    behavior: FAIL
+
+pluginDefaults:
+  - forced: false
+    type: io.kestra.plugin.docker.Run
+    values:
+      containerImage: alpine:latest
+      entryPoint: ["/bin/sh", "-c"]
+      pullPolicy: IF_NOT_PRESENT
+
+tasks:
+  - id: concurrentTesting
+    type: io.kestra.plugin.core.flow.Parallel
+    allowWarning: true
+    tasks:
+      - id: testEnvAndInputFiles
+        type: io.kestra.plugin.docker.Run
+        containerImage: "{{ 'alpine:latest' }}"
+        entryPoint: "{{ vars.testDynamicEntryPoint }}"
+        pullPolicy: "{{ 'IF_NOT_PRESENT' }}"
+        inputFiles:
+          someFile.txt: "{{ vars.testFileContent }}"
+        env:
+          TEST_ENV: "{{ vars.testEnvValue }}"
+        commands:
+          - echo $TEST_ENV > envOutput.txt && cat someFile.txt > inputFileOutput.txt
+        outputFiles:
+          - envOutput.txt
+          - inputFileOutput.txt
+
+      - id: makeVarsOutput
+        type: io.kestra.plugin.docker.Run
+        commands:
+          - echo '::{"outputs":{"test":"value","int":2,"bool":true,"float":3.65}}::'
+
+      - id: testCpuMemoryConsumption
+        type: io.kestra.plugin.docker.Run
+        wait: true
+        cpu:
+          # # Should be possible to use a floating number but the cpu property is cast to a long which prevents us to do so
+          # # Refers to : https://github.com/kestra-io/kestra/issues/8510
+          cpus: "{{1}}"
+        memory:
+          memory: "{{'1GB'}}"
+          kernelMemory: "{{'268435456'}}"  # 256MB in bytes
+          memoryReservation: "{{'268435456'}}"  # 256MB in bytes
+          memorySwap: "{{'1073741824'}}"  # 1GB in bytes
+          memorySwappiness: "{{'60'}}"
+          oomKillDisable: "{{true}}"
+        commands:
+          - "{{ vars.testDynamicCommand }}"
+        # Can't manage to do a proper test over the limitation of mem and cpu... here's my last attempt
+        #
+        #     commands:
+        #       - |
+        #         apk add --no-cache procps coreutils
+        #         # Launch background memory hog (allocates ~200MB)
+        #         (dd if=/dev/zero of=/dev/null bs=1M count=200 &)
+        #         var=$(head -c 200MB </dev/zero | tr '\0' 'a')
+        #         # Launch background CPU hog (infinite loop)
+        #         (while :; do :; done) &
+        #         # Sleep to allow peak usage to build up
+        #         sleep 5
+        #         # Capture current CPU and memory usage of all processes
+        #         top -b -n 1 > usage.txt
+        #         # Clean up
+        #         killall dd || true
+        #         killall sh || true
+        #     outputFiles:
+        #       - usage.txt
+
+      - id: testUserPrivileged
+        type: io.kestra.plugin.docker.Run
+        allowFailure: true
+        inputFiles:
+          whoami.txt: "not privileged"
+        commands:
+          - id > whoami.txt
+        user: "{{'1000:1000'}}"
+        outputFiles:
+          - "{{'whoami.txt'}}"
+        privileged: "{{false}}"
+
+      - id: workingDirectory
+        type: io.kestra.plugin.core.flow.WorkingDirectory
+        inputFiles:
+          someDir/someDummyFile.txt: "{{ vars.testFileContent }}"
+        tasks:
+          - id: testVolumes
+            type: io.kestra.plugin.docker.Run
+            commands:
+              - cat someDir/someDummyFile.txt > someDir/someOtherFile.txt
+            volumes:
+              - "{{ 'someDir:someDir' }}"
+            outputFiles:
+              - someDir/someOtherFile.txt
+
+      - id: testPullPolicy
+        type: io.kestra.plugin.docker.Run
+        pullPolicy: ALWAYS
+        wait: "{{ true }}"
+        commands:
+          - echo "Testing pull policy"
+
+      - id: testWait
+        type: io.kestra.plugin.docker.Run
+        wait: false
+        commands:
+          - sleep 120
+
+      - id: testExtraHostsNetworkMode
+        type: io.kestra.plugin.docker.Run
+        commands:
+          - cat /etc/hosts > hosts.txt
+        #host: "{{ 'localhost' }}"
+        extraHosts:
+          - "{{ 'custom.local:127.0.0.1' }}"
+        networkMode: "{{ 'bridge' }}"
+        outputFiles:
+          - hosts.txt
+
+      # - id: test-config-credentials
+      #   type: io.kestra.plugin.docker.Run
+      #   containerImage: private.registry/my-image:latest
+      #   config: "{{ secret('docker_config') }}"
+      #   credentials:
+      #     username: "{{ secret('docker_user') }}"
+      #     password: "{{ secret('docker_pass') }}"
+      #   commands:
+      #     - echo "Authenticated run"
+
+  - id: assertResults
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ (read(outputs['testEnvAndInputFiles'].outputFiles['envOutput.txt']) | trim) == (vars.testEnvValue | trim) }}"
+      - "{{ (read(outputs['testEnvAndInputFiles'].outputFiles['inputFileOutput.txt']) | trim) == (vars.testFileContent | trim) }}"
+      
+      - "{{ (read(outputs['testUserPrivileged'].outputFiles['whoami.txt']) | trim) contains '1000' }}"
+      
+      - "{{ (read(outputs['testVolumes'].outputFiles['someDir/someOtherFile.txt']) | trim) == (vars.testFileContent | trim) }}"
+      
+      - "{{ (read(outputs['testExtraHostsNetworkMode'].outputFiles['hosts.txt'])) contains 'custom.local' }}"
+      
+      - "{{ outputs.makeVarsOutput['vars'].test == 'value' }}"
