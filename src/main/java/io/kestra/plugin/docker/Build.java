@@ -85,7 +85,7 @@ import java.util.stream.Collectors;
                       - kestra/polars:latest
                     push: true
                     credentials:
-                      registry: https://index.docker.io/v1/
+                      registry: https://registry-1.docker.io/v2/
                       username: "{{ secret('DOCKERHUB_USERNAME') }}"
                       password: "{{ secret('DOCKERHUB_PASSWORD') }}"
             """
