@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
                 tasks:
                   - id: build
                     type: io.kestra.plugin.docker.Build
+                    push: true
                     dockerfile: |
                       FROM ubuntu
                       ARG APT_PACKAGES=""
