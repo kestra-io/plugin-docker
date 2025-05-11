@@ -48,6 +48,7 @@ import java.util.stream.Collectors;
                 tasks:
                   - id: build
                     type: io.kestra.plugin.docker.Build
+                    push: true
                     dockerfile: |
                       FROM ubuntu
                       ARG APT_PACKAGES=""
@@ -84,7 +85,7 @@ import java.util.stream.Collectors;
                       - kestra/polars:latest
                     push: true
                     credentials:
-                      registry: https://index.docker.io/v1/
+                      registry: https://index.docker.io/v1/ # for now only V1 is supported until https://github.com/kestra-io/plugin-docker/issues/66
                       username: "{{ secret('DOCKERHUB_USERNAME') }}"
                       password: "{{ secret('DOCKERHUB_PASSWORD') }}"
             """
