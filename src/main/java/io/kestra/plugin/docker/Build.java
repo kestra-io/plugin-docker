@@ -88,7 +88,7 @@ import java.util.stream.Collectors;
                       registry: https://index.docker.io/v1/ # for now only V1 is supported until https://github.com/kestra-io/plugin-docker/issues/66
                       username: "{{ secret('DOCKERHUB_USERNAME') }}"
                       password: "{{ secret('DOCKERHUB_PASSWORD') }}"
-            """
+                """
         ),
         @Example(
             full = true,
@@ -110,7 +110,7 @@ import java.util.stream.Collectors;
                     credentials:
                       username: kestra
                       password: "{{ secret('GITHUB_ACCESS_TOKEN') }}"
-            """
+                """
         ),
         @Example(
             full = true,
@@ -140,7 +140,7 @@ import java.util.stream.Collectors;
                       enabled: true
                     commands:
                       - python main.py
-            """
+                """
         )
     }
 )
