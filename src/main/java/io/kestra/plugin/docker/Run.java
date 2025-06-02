@@ -187,7 +187,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
         description = "Pull policy can be used to prevent pulling of an already existing image `IF_NOT_PRESENT`, or can be set to `ALWAYS` to pull the latest version of the image even if an image with the same tag already exists."
     )
     @Builder.Default
-    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.IF_NOT_PRESENT);
+    protected Property<PullPolicy> pullPolicy = Property.ofValue(PullPolicy.IF_NOT_PRESENT);
 
     @Schema(
         title = "A list of device requests to be sent to device drivers."
@@ -246,13 +246,13 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
         title = "The commands to run"
     )
     @Builder.Default
-    private Property<List<String>> commands = Property.of(new ArrayList<>());
+    private Property<List<String>> commands = Property.ofValue(new ArrayList<>());
 
     @Builder.Default
     @Schema(
         title = "Whether to wait for the container to exit, or simply start it."
     )
-    private final Property<Boolean> wait = Property.of(true);
+    private final Property<Boolean> wait = Property.ofValue(true);
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {

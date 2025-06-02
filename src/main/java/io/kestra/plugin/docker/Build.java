@@ -159,13 +159,13 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
         title = "Whether to push the image to a remote container registry."
     )
     @Builder.Default
-    private Property<Boolean> push = Property.of(false);
+    private Property<Boolean> push = Property.ofValue(false);
 
     @Schema(
         title = "Always attempt to pull the latest version of the base image."
     )
     @Builder.Default
-    private Property<Boolean> pull = Property.of(true);
+    private Property<Boolean> pull = Property.ofValue(true);
 
     @Schema(
         title = "The list of tag of this image.",

@@ -25,8 +25,8 @@ class StopTest {
         Run run = Run.builder()
             .id("run")
             .type(Run.class.getName())
-            .containerImage(Property.of("redis"))
-            .wait(Property.of(false))
+            .containerImage(Property.ofValue("redis"))
+            .wait(Property.ofValue(false))
             .build();
         RunContext runRunContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
 
@@ -39,7 +39,7 @@ class StopTest {
         Stop stop = Stop.builder()
             .id("run")
             .type(Stop.class.getName())
-            .containerId(Property.of(detailResult.getContainerId()))
+            .containerId(Property.ofValue(detailResult.getContainerId()))
             .build();
         RunContext stopRunContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
 

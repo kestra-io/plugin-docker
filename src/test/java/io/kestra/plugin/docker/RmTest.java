@@ -34,8 +34,8 @@ class RmTest extends AbstractDockerHelper {
         Rm removeContainers = Rm.builder()
             .id(Run.class.getSimpleName())
             .type(Rm.class.getName())
-            .containerIds(Property.of(List.of(containerId1, containerId2)))
-            .force(Property.of(true))
+            .containerIds(Property.ofValue(List.of(containerId1, containerId2)))
+            .force(Property.ofValue(true))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, removeContainers, ImmutableMap.of());
@@ -51,7 +51,7 @@ class RmTest extends AbstractDockerHelper {
         Rm removeImages = Rm.builder()
             .id(Run.class.getSimpleName())
             .type(Rm.class.getName())
-            .imageIds(Property.of(List.of(image)))
+            .imageIds(Property.ofValue(List.of(image)))
             .build();
 
         removeImages.run(runContext);

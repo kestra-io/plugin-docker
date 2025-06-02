@@ -66,7 +66,7 @@ public class Prune extends AbstractDocker implements RunnableTask<VoidOutput> {
             """
     )
     @Builder.Default
-    Property<Boolean> dangling = Property.of(Boolean.FALSE);
+    Property<Boolean> dangling = Property.ofValue(Boolean.FALSE);
 
     @Schema(
         title = "Until filter.",
