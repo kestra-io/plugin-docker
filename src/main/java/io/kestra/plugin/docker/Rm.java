@@ -59,14 +59,14 @@ public class Rm extends AbstractDocker implements RunnableTask<VoidOutput> {
         description = "Remove volumes associated to the container"
     )
     @Builder.Default
-    protected Property<Boolean> removeVolumes = Property.of(Boolean.FALSE);
+    protected Property<Boolean> removeVolumes = Property.ofValue(Boolean.FALSE);
 
     @Schema(
         title = "Force.",
         description = "Use flag --force to remove images and containers"
     )
     @Builder.Default
-    protected Property<Boolean> force = Property.of(Boolean.FALSE);
+    protected Property<Boolean> force = Property.ofValue(Boolean.FALSE);
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {

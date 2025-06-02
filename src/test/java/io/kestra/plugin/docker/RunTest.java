@@ -32,13 +32,13 @@ class RunTest extends AbstractDockerHelper {
         Run run = Run.builder()
             .id("run")
             .type(Run.class.getName())
-            .containerImage(Property.of("ubuntu"))
+            .containerImage(Property.ofValue("ubuntu"))
             .commands(TestsUtils.propertyFromList(List.of(
                 "/bin/sh", "-c",
                 "echo", "here",
                 "echo {{ workingDir }} > output.txt",
                 "echo 'Hello World' > output.txt")))
-            .outputFiles(Property.of(List.of("output.txt")))
+            .outputFiles(Property.ofValue(List.of("output.txt")))
             .build();
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
 
@@ -54,15 +54,15 @@ class RunTest extends AbstractDockerHelper {
         Run run = Run.builder()
             .id(Run.class.getSimpleName())
             .type(Run.class.getName())
-            .containerImage(Property.of(
+            .containerImage(Property.ofValue(
                 useRegistry ? getPrivateImage() : getRegistry() + "/" + getPrivateImage()
             ))
             .credentials(Credentials.builder()
-                .username(Property.of(getUsername()))
-                .password(Property.of(getPassword()))
-                .registry(Property.of(getRegistry()))
+                .username(Property.ofValue(getUsername()))
+                .password(Property.ofValue(getPassword()))
+                .registry(Property.ofValue(getRegistry()))
                 .build())
-            .commands(Property.of(List.of("echo", "here")))
+            .commands(Property.ofValue(List.of("echo", "here")))
             .build();
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
 
@@ -77,14 +77,14 @@ class RunTest extends AbstractDockerHelper {
         Run run = Run.builder()
             .id(Run.class.getSimpleName())
             .type(Run.class.getName())
-            .containerImage(Property.of(getPrivateImage()))
+            .containerImage(Property.ofValue(getPrivateImage()))
             .credentials(Credentials.builder()
-                .username(Property.of(getUsername()))
-                .password(Property.of("incorrectPassword"))
-                .registry(Property.of(getRegistry()))
+                .username(Property.ofValue(getUsername()))
+                .password(Property.ofValue("incorrectPassword"))
+                .registry(Property.ofValue(getRegistry()))
                 .build())
-            .commands(Property.of(List.of("echo", "here")))
-            .pullPolicy(Property.of(PullPolicy.ALWAYS))
+            .commands(Property.ofValue(List.of("echo", "here")))
+            .pullPolicy(Property.ofValue(PullPolicy.ALWAYS))
             .build();
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
 
