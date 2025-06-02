@@ -27,11 +27,11 @@ class BuildTest {
         Build task = Build.builder()
             .id("unit-test")
             .type(Build.class.getName())
-            .platforms(Property.of(List.of("linux/amd64")))
-            .buildArgs(Property.of(Map.of("APT_PACKAGES", "curl")))
-            .labels(Property.of(Map.of("unit-test", "true")))
-            .tags(Property.of(List.of("unit-test")))
-            .dockerfile(Property.of("""
+            .platforms(Property.ofValue(List.of("linux/amd64")))
+            .buildArgs(Property.ofValue(Map.of("APT_PACKAGES", "curl")))
+            .labels(Property.ofValue(Map.of("unit-test", "true")))
+            .tags(Property.ofValue(List.of("unit-test")))
+            .dockerfile(Property.ofValue("""
                 FROM ubuntu
                 ARG APT_PACKAGES=""
 
@@ -60,11 +60,11 @@ class BuildTest {
         Build task = Build.builder()
             .id("unit-test")
             .type(Build.class.getName())
-            .platforms(Property.of(List.of("linux/amd64")))
-            .buildArgs(Property.of(Map.of("APT_PACKAGES", "curl")))
-            .labels(Property.of(Map.of("unit-test", "true")))
-            .tags(Property.of(List.of("unit-test")))
-            .dockerfile(Property.of(path.getFileName().toString()))
+            .platforms(Property.ofValue(List.of("linux/amd64")))
+            .buildArgs(Property.ofValue(Map.of("APT_PACKAGES", "curl")))
+            .labels(Property.ofValue(Map.of("unit-test", "true")))
+            .tags(Property.ofValue(List.of("unit-test")))
+            .dockerfile(Property.ofValue(path.getFileName().toString()))
             .build();
 
         Build.Output run = task.run(runContext);

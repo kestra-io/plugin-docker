@@ -25,7 +25,7 @@ class PullTest extends AbstractDockerHelper {
         Pull pull = Pull.builder()
             .id("run")
             .type(Stop.class.getName())
-            .image(Property.of(image))
+            .image(Property.ofValue(image))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, pull, ImmutableMap.of());
@@ -44,11 +44,11 @@ class PullTest extends AbstractDockerHelper {
         Pull pull = Pull.builder()
             .id("run")
             .type(Stop.class.getName())
-            .image(Property.of(image))
+            .image(Property.ofValue(image))
             .credentials(Credentials.builder()
-                .username(Property.of(getUsername()))
-                .password(Property.of(getPassword()))
-                .registry(Property.of(getRegistry()))
+                .username(Property.ofValue(getUsername()))
+                .password(Property.ofValue(getPassword()))
+                .registry(Property.ofValue(getRegistry()))
                 .build()
             )
             .build();

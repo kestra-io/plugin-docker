@@ -91,8 +91,8 @@ public class AbstractDockerHelper {
         Run run = Run.builder()
             .id(Run.class.getSimpleName())
             .type(Run.class.getName())
-            .wait(Property.of(false))
-            .containerImage(Property.of(image))
+            .wait(Property.ofValue(false))
+            .containerImage(Property.ofValue(image))
             .build();
         RunContext runRunContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
         ScriptOutput runOutput = run.run(runRunContext);
@@ -105,11 +105,11 @@ public class AbstractDockerHelper {
         Build task = Build.builder()
             .id(Build.class.getSimpleName())
             .type(Build.class.getName())
-            .platforms(Property.of(List.of("linux/amd64")))
-            .buildArgs(Property.of(Map.of("APT_PACKAGES", "curl")))
-            .labels(Property.of(Map.of(label, "true")))
-            .tags(Property.of(List.of(image)))
-            .dockerfile(Property.of("""
+            .platforms(Property.ofValue(List.of("linux/amd64")))
+            .buildArgs(Property.ofValue(Map.of("APT_PACKAGES", "curl")))
+            .labels(Property.ofValue(Map.of(label, "true")))
+            .tags(Property.ofValue(List.of(image)))
+            .dockerfile(Property.ofValue("""
                 FROM ubuntu
                 ARG APT_PACKAGES=""
 

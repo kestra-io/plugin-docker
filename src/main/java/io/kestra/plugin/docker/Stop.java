@@ -47,12 +47,12 @@ public class Stop extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(title = "Does a kill or a stop command will be used.")
     @Builder.Default
     @NotNull
-    private Property<Boolean> kill = Property.of(false);
+    private Property<Boolean> kill = Property.ofValue(false);
 
     @Schema(title = "Does we will remove the container.")
     @Builder.Default
     @NotNull
-    private Property<Boolean> delete = Property.of(true);
+    private Property<Boolean> delete = Property.ofValue(true);
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {

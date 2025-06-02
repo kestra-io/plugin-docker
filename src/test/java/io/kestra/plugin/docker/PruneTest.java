@@ -36,7 +36,7 @@ class PruneTest extends AbstractDockerHelper {
         Prune prune = Prune.builder()
             .id(PruneTest.class.getSimpleName())
             .type(PruneTest.class.getName())
-            .pruneType(Property.of(PruneType.IMAGES))
+            .pruneType(Property.ofValue(PruneType.IMAGES))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, prune, Map.of());
