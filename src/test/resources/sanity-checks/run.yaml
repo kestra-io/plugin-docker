@@ -123,7 +123,7 @@ tasks:
 
       - id: testPullPolicy
         type: io.kestra.plugin.docker.Run
-        pullPolicy: ALWAYS
+        pullPolicy: IF_NOT_PRESENT
         wait: "{{ true }}"
         commands:
           - echo "Testing pull policy"
