@@ -187,7 +187,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
         description = "Pull policy can be used to prevent pulling of an already existing image `IF_NOT_PRESENT`, or can be set to `ALWAYS` to pull the latest version of the image even if an image with the same tag already exists."
     )
     @Builder.Default
-    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.ALWAYS);
+    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.IF_NOT_PRESENT);
 
     @Schema(
         title = "A list of device requests to be sent to device drivers."

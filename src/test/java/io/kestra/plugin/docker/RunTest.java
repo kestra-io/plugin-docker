@@ -9,6 +9,7 @@ import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.plugin.scripts.runner.docker.Credentials;
+import io.kestra.plugin.scripts.runner.docker.PullPolicy;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -83,6 +84,7 @@ class RunTest extends AbstractDockerHelper {
                 .registry(Property.of(getRegistry()))
                 .build())
             .commands(Property.of(List.of("echo", "here")))
+            .pullPolicy(Property.of(PullPolicy.ALWAYS))
             .build();
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, run, ImmutableMap.of());
 
