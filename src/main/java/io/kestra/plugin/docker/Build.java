@@ -105,10 +105,10 @@ import java.util.stream.Collectors;
                       RUN pip install --upgrade pip
                       RUN pip install --no-cache-dir kestra requests "polars[all]"
                     tags:
-                      - ghcr.io/kestra/polars:latest
+                      - ghcr.io/kestra-io/polars:latest
                     push: true
                     credentials:
-                      username: kestra
+                      username: kestra-io
                       password: "{{ secret('GITHUB_ACCESS_TOKEN') }}"
                 """
         ),
