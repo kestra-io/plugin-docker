@@ -7,6 +7,7 @@ import com.github.dockerjava.api.model.BuildResponseItem;
 import com.github.dockerjava.api.model.PushResponseItem;
 import com.github.dockerjava.core.DefaultDockerClientConfig;
 import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Metric;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
@@ -141,6 +142,14 @@ import java.util.stream.Collectors;
                     commands:
                       - python main.py
                 """
+        )
+    },
+    metrics = {
+        @Metric(
+            name = "bytes",
+            type = Counter.TYPE,
+            unit = "bytes",
+            description = "Total bytes pushed to the container registry"
         )
     }
 )
