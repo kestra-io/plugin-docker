@@ -30,7 +30,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Plugin(
     examples = {
         @Example(
-            title = "Run the docker/whalesay container with the command 'cowsay hello'",
+            title = "Run the alpine container with no command",
             full = true,
             code = """
                 id: docker_run
@@ -39,23 +39,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 tasks:
                   - id: run
                     type: io.kestra.plugin.docker.Run
-                    containerImage: docker/whalesay
-                    commands:
-                      - cowsay
-                      - hello
-                """
-        ),
-        @Example(
-            title = "Run the docker/whalesay container with no command",
-            full = true,
-            code = """
-                id: docker_run
-                namespace: company.team
-
-                tasks:
-                  - id: run
-                    type: io.kestra.plugin.docker.Run
-                    containerImage: docker/whalesay
+                    containerImage: alpine:latest
                 """
         ),
         @Example(
