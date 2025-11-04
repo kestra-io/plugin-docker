@@ -1,0 +1,8 @@
+group: io.kestra.plugin.docker
+name: "docker"
+title: "Docker"
+description: "This subgroup of plugins contains tasks for interacting with the Docker API."
+body: ""
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"
