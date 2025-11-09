@@ -74,7 +74,7 @@ import java.util.stream.Collectors;
             code = """
                 id: build_dockerhub_image
                 namespace: company.team
-                
+
                 tasks:
                   - id: build
                     type: io.kestra.plugin.docker.Build
@@ -97,7 +97,7 @@ import java.util.stream.Collectors;
             code = """
                 id: build_github_container_image
                 namespace: company.team
-                
+
                 tasks:
                   - id: build
                     type: io.kestra.plugin.docker.Build
@@ -119,7 +119,7 @@ import java.util.stream.Collectors;
             code = """
                 id: build_task_runner_image
                 namespace: company.team
-                
+
                 tasks:
                   - id: build
                     type: io.kestra.plugin.docker.Build
@@ -130,7 +130,7 @@ import java.util.stream.Collectors;
                       WORKDIR /app
                       RUN pip install --no-cache-dir pandas
                       COPY . /app
-                
+
                   - id: python
                     type: io.kestra.plugin.scripts.python.Commands
                     containerImage: "{{ outputs.build.imageId }}"
@@ -294,49 +294,6 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
             title = "The generated image id."
         )
         private String imageId;
-    }
-
-    @Getter
-    public static class PushResponseItemCallback extends ResultCallback.Adapter<PushResponseItem> {
-        private final RunContext runContext;
-        private Exception error;
-
-        public PushResponseItemCallback(RunContext runContext) {
-            super();
-            this.runContext = runContext;
-        }
-
-        @Override
-        public void onNext(PushResponseItem item) {
-            super.onNext(item);
-
-            if (item.getErrorDetail() != null) {
-                this.error = new Exception(item.getErrorDetail().getMessage());
-            }
-
-            //noinspection deprecation
-            if (item.getProgress() != null) {
-                this.runContext.logger().debug("{} {}", item.getId(), item.getProgress());
-            } else if (item.getRawValues().containsKey("status") &&
-                !item.getRawValues().get("status").toString().trim().isEmpty()
-            ) {
-                this.runContext.logger().info("{} {}", item.getId(), item.getRawValues().get("status").toString().trim());
-            }
-
-            if (item.getProgressDetail() != null &&
-                item.getProgressDetail().getCurrent() != null &&
-                Objects.equals(item.getProgressDetail().getCurrent(), item.getProgressDetail().getTotal())
-            ) {
-                runContext.metric(Counter.of("bytes", item.getProgressDetail().getTotal()));
-            }
-        }
-
-        @Override
-        public void onError(Throwable throwable) {
-            super.onError(throwable);
-
-            this.error = new Exception(throwable);
-        }
     }
 
     public static class BuildImageResultCallback extends com.github.dockerjava.api.command.BuildImageResultCallback {
