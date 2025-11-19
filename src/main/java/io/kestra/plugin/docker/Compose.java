@@ -48,20 +48,6 @@ import java.util.List;
                     command: UP
                     detach: true
                 """
-        ),
-        @Example(
-            title = "Run docker compose down using a compose.yaml file from namespace files",
-            full = true,
-            code = """
-                id: docker_compose_down
-                namespace: company.team
-
-                tasks:
-                  - id: down
-                    type: io.kestra.plugin.docker.Compose
-                    composeFile: compose.yaml
-                    command: DOWN
-                """
         )
     }
 )
@@ -81,8 +67,7 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
         .build();
 
     @Schema(
-        title = "The docker compose command to run.",
-        description = "Currently supported: UP (docker compose up) and DOWN (docker compose down)."
+        title = "The docker compose command to run."
     )
     @Builder.Default
     private Property<Command> command = Property.ofValue(Command.UP);
