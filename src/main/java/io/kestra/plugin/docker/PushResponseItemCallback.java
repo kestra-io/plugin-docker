@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;// package io.kestra.plugin.docker;
+package io.kestra.plugin.docker;
 
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.model.PushResponseItem;
