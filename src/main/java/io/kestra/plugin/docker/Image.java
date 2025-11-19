@@ -90,16 +90,15 @@ public class Image extends AbstractDocker implements RunnableTask<VoidOutput> {
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        Command cmd = runContext.render(this.command).as(Command.class).orElseThrow();
-        String src = runContext.render(this.sourceImage).as(String.class).orElseThrow();
+        var rCommand = runContext.render(this.command).as(Command.class).orElseThrow();
+        var rSourceImage = runContext.render(this.sourceImage).as(String.class).orElseThrow();
+        var rHost = runContext.render(this.host).as(String.class).orElse(null);
 
-        String host = runContext.render(this.host).as(String.class).orElse(null);
-
-        try (DockerClient client = DockerService.client(runContext, host, this.getConfig(), this.getCredentials(), src)) {
-            switch (cmd) {
-                case TAG -> tagImage(runContext, client, src);
-                case REMOVE -> removeImage(runContext, client, src);
-                default -> throw new IllegalArgumentException("Unsupported command: " + cmd);
+        try (var client = DockerService.client(runContext, rHost, this.getConfig(), this.getCredentials(), rSourceImage)) {
+            switch (rCommand) {
+                case TAG -> tagImage(runContext, client, rSourceImage);
+                case REMOVE -> removeImage(runContext, client, rSourceImage);
+                default -> throw new IllegalArgumentException("Unsupported command: " + rCommand);
             }
         }
 
@@ -107,20 +106,17 @@ public class Image extends AbstractDocker implements RunnableTask<VoidOutput> {
     }
 
     private void tagImage(RunContext runContext, DockerClient client, String source) throws Exception {
-        String target = runContext.render(this.targetImage).as(String.class).orElse(null);
-        if (target == null || target.isBlank()) {
-            throw new IllegalArgumentException("targetImage must be provided for TAG command");
-        }
+        var rTargetImage = runContext.render(this.targetImage).as(String.class).orElseThrow(() -> new IllegalArgumentException("targetImage must be provided for TAG command"));
 
         String repository;
         String tag;
 
-        int lastColon = target.lastIndexOf(':');
-        if (lastColon > target.lastIndexOf('/')) {
-            repository = target.substring(0, lastColon);
-            tag = target.substring(lastColon + 1);
+        int lastColon = rTargetImage.lastIndexOf(':');
+        if (lastColon > rTargetImage.lastIndexOf('/')) {
+            repository = rTargetImage.substring(0, lastColon);
+            tag = rTargetImage.substring(lastColon + 1);
         } else {
-            repository = target;
+            repository = rTargetImage;
             tag = "latest";
         }
 

@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
                   - id: push
                     type: io.kestra.plugin.docker.Push
                     tags:
-                      - kestra/polars:latest
+                      - image/demo:latest
                     credentials:
                       registry: https://index.docker.io/v1/
                       username: "{{ secret('DOCKERHUB_USERNAME') }}"
@@ -83,16 +83,16 @@ public class Push extends AbstractDocker implements RunnableTask<VoidOutput> {
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        List<String> renderedTags = runContext.render(this.tags).asList(String.class);
-        if (renderedTags == null || renderedTags.isEmpty()) {
+        var rTags = runContext.render(this.tags).asList(String.class);
+        if (rTags == null || rTags.isEmpty()) {
             throw new IllegalArgumentException("At least one tag must be provided");
         }
 
-        Set<String> tagsWithoutScheme = renderedTags.stream()
+        Set<String> tagsWithoutScheme = rTags.stream()
             .map(this::removeScheme)
             .collect(Collectors.toSet());
 
-        try (DockerClient dockerClient = DockerService.client(
+        try (var dockerClient = DockerService.client(
             runContext,
             runContext.render(this.host).as(String.class).orElse(null),
             this.getConfig(),
