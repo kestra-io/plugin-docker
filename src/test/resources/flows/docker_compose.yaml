@@ -12,6 +12,7 @@ tasks:
 
   - id: up
     type: io.kestra.plugin.docker.Compose
-    command: UP
-    detach: true
+    composeArgs:
+      - up
+      - -d
     composeFile: "{{ outputs.write_compose.uri }}"

@@ -14,7 +14,7 @@ import static org.hamcrest.Matchers.is;
 class RunnerTest {
     @Test
     @ExecuteFlow("flows/docker_compose.yaml")
-    void increment(Execution execution) {
+    void flow(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
