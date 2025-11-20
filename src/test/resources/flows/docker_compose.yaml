@@ -1,0 +1,18 @@
+id: docker_compose
+namespace: company.team
+
+tasks:
+  - id: write_compose
+    type: io.kestra.plugin.core.storage.Write
+    content: |
+      services:
+        web:
+          image: nginx:alpine
+    extension: .yaml
+
+  - id: up
+    type: io.kestra.plugin.docker.Compose
+    composeArgs:
+      - up
+      - -d
+    composeFile: "{{ outputs.write_compose.uri }}"
