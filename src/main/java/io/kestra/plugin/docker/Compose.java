@@ -26,9 +26,7 @@ import java.util.List;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
-@Schema(
-    title = "Run Docker Compose commands."
-)
+@Schema(title = "Run Docker Compose commands.")
 @Plugin(
     examples = {
         @Example(
@@ -45,128 +43,80 @@ import java.util.List;
                       services:
                         web:
                           image: nginx:alpine
-                    command: UP
-                    detach: true
+                    composeArgs:
+                      - up
+                      - -d
                 """
         )
     }
 )
 public class Compose extends AbstractExecScript implements RunnableTask<ScriptOutput> {
+
     @Schema(
-        title = "The contents of your docker-compose file passed as a string, " +
-            "a path to a compose file in the working directory, or a Kestra internal URI."
+        title = "The compose file (inline YAML, path in working directory, or Kestra URI)."
     )
     @NotNull
     @PluginProperty(internalStorageURI = true)
     private Property<String> composeFile;
 
+    @Schema(
+        title = "Arguments passed AFTER `docker compose -f <file>`.",
+        description = "Example: ['up', '-d'], ['logs', '-f'], ['exec', 'web', 'ls']"
+    )
+    @NotNull
+    @PluginProperty
+    private Property<List<String>> composeArgs;
+
+    // Force using host process runner
     @Builder.Default
     @PluginProperty
     protected TaskRunner<?> taskRunner = Process.builder()
         .type(Process.class.getName())
         .build();
 
-    @Schema(
-        title = "The docker compose command to run."
-    )
-    @Builder.Default
-    private Property<Command> command = Property.ofValue(Command.UP);
-
-    @Schema(
-        title = "Whether to detach containers when running `docker compose up`.",
-        description = "Corresponds to the `-d` flag."
-    )
-    @Builder.Default
-    private Property<Boolean> detach = Property.ofValue(true);
-
-    @Schema(
-        title = "Optional list of services to target.",
-        description = "If empty, the command applies to all services."
-    )
-    private Property<List<String>> services;
-
-    @Schema(
-        title = "Optional docker compose project name.",
-        description = "Corresponds to the `-p` / `--project-name` flag."
-    )
-    private Property<String> projectName;
-
     @Override
     public Property<String> getContainerImage() {
         return Property.ofValue(null);
-    }
-
-    public enum Command {
-        UP,
-        DOWN
     }
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
         Path composePath = resolveComposeFile(runContext);
 
-        var rCommand = runContext.render(this.command).as(Command.class).orElse(Command.UP);
-        boolean detachFlag = runContext.render(this.detach).as(Boolean.class).orElse(false);
-        List<String> renderedServices = runContext.render(this.services).asList(String.class);
-        String renderedProjectName = runContext.render(this.projectName).as(String.class).orElse(null);
-
         List<String> args = new ArrayList<>();
         args.add("docker");
         args.add("compose");
         args.add("-f");
         args.add(composePath.toString());
+        args.addAll(runContext.render(composeArgs).asList(String.class));
 
-        if (renderedProjectName != null && !renderedProjectName.isBlank()) {
-            args.add("-p");
-            args.add(renderedProjectName);
-        }
-
-        switch (rCommand) {
-            case UP -> {
-                args.add("up");
-                if (detachFlag) {
-                    args.add("-d");
-                }
-                if (!renderedServices.isEmpty()) {
-                    args.addAll(renderedServices);
-                }
-            }
-            case DOWN -> args.add("down");
-        }
-
-        String commandLine = String.join(" ", args);
-
-        runContext.logger().info("Running command: {}", commandLine);
+        runContext.logger().info("Running command: {}", String.join(" ", args));
 
         return this.commands(runContext)
-            .withInterpreter(this.interpreter)
             .withTaskRunner(this.taskRunner)
-            .withBeforeCommands(this.beforeCommands)
-            .withBeforeCommandsWithOptions(true)
-            .withCommands(Property.ofValue(List.of(commandLine)))
+            .withCommands(Property.ofValue(args))
             .run();
-
     }
 
     private Path resolveComposeFile(RunContext runContext) throws Exception {
         var workingDir = runContext.workingDir();
-        var rComposeFile = runContext.render(this.composeFile).as(String.class).orElseThrow();
+        String value = runContext.render(this.composeFile).as(String.class).orElseThrow();
 
-        if (rComposeFile.startsWith("kestra://")) {
+        if (value.startsWith("kestra://")) {
             Path tempFile = workingDir.createTempFile(".yaml");
-            try (InputStream in = runContext.storage().getFile(URI.create(rComposeFile))) {
+            try (InputStream in = runContext.storage().getFile(URI.create(value))) {
                 java.nio.file.Files.copy(in, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }
             return tempFile;
         }
 
-        Path candidate = workingDir.resolve(java.nio.file.Path.of(rComposeFile));
+        Path candidate = workingDir.resolve(Path.of(value));
         if (candidate.toFile().exists()) {
             return candidate;
         }
 
         return workingDir.createTempFile(
-            rComposeFile.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+            value.getBytes(java.nio.charset.StandardCharsets.UTF_8),
             ".yaml"
         );
     }
