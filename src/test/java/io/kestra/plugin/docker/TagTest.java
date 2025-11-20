@@ -22,7 +22,9 @@ class TagTest {
 
     @Test
     void tagImage() throws Exception {
-        Build build = Build.builder()
+        var runContext = runContextFactory.of();
+
+        var build = Build.builder()
             .id("build")
             .type(Build.class.getName())
             .platforms(Property.ofValue(List.of("linux/amd64")))
@@ -36,18 +38,16 @@ class TagTest {
             """))
             .build();
 
-        RunContext buildContext = TestsUtils.mockRunContext(runContextFactory, build, ImmutableMap.of());
-        Build.Output output = build.run(buildContext);
+        var output = build.run(runContext);
         assertThat(output.getImageId(), notNullValue());
 
-        Tag imageTask = Tag.builder()
+        var tagTask = Tag.builder()
             .id("tag")
             .type(Tag.class.getName())
             .sourceImage(Property.ofValue("image-source:unit"))
             .targetImage(Property.ofValue("image-target:unit"))
             .build();
 
-        RunContext tagContext = TestsUtils.mockRunContext(runContextFactory, imageTask, ImmutableMap.of());
-        imageTask.run(tagContext);
+        tagTask.run(runContext);
     }
 }

@@ -27,9 +27,9 @@ public class PushTest extends AbstractDockerHelper {
     void pushToLocalRegistryAndPullBack() throws Exception {
         var runContext = runContextFactory.of();
 
-        String localTag = helper.getPrivateImage();
-        String registry = helper.getRegistry();
-        String remoteTag = registry + "/" + localTag;
+        var localTag = helper.getPrivateImage();
+        var registry = helper.getRegistry();
+        var remoteTag = registry + "/" + localTag;
 
         helper.rmImageIfExists(runContext, localTag, null);
         helper.rmImageIfExists(runContext, remoteTag, null);
@@ -38,7 +38,7 @@ public class PushTest extends AbstractDockerHelper {
 
         assertThat(helper.getImageId(runContext, localTag, null), notNullValue());
 
-        Credentials credentials = Credentials.builder()
+        var credentials = Credentials.builder()
             .registry(Property.ofValue(registry))
             .username(Property.ofValue(helper.getUsername()))
             .password(Property.ofValue(helper.getPassword()))
@@ -52,8 +52,7 @@ public class PushTest extends AbstractDockerHelper {
             .credentials(credentials)
             .build();
 
-        var tagContext = TestsUtils.mockRunContext(runContextFactory, tagTask, ImmutableMap.of());
-        tagTask.run(tagContext);
+        tagTask.run(runContext);
 
         var pushTask = Push.builder()
             .id("push")
@@ -62,8 +61,7 @@ public class PushTest extends AbstractDockerHelper {
             .credentials(credentials)
             .build();
 
-        RunContext pushContext = TestsUtils.mockRunContext(runContextFactory, pushTask, ImmutableMap.of());
-        pushTask.run(pushContext);
+        pushTask.run(runContext);
 
         helper.rmImageIfExists(runContext, remoteTag, credentials);
         assertThat(helper.getImageId(runContext, remoteTag, credentials), nullValue());
@@ -75,8 +73,7 @@ public class PushTest extends AbstractDockerHelper {
             .credentials(credentials)
             .build();
 
-        RunContext pullContext = TestsUtils.mockRunContext(runContextFactory, pullTask, ImmutableMap.of());
-        pullTask.run(pullContext);
+        pullTask.run(runContext);
 
         assertThat(helper.getImageId(runContext, remoteTag, credentials), notNullValue());
     }

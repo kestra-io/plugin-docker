@@ -23,14 +23,16 @@ class ComposeTest extends AbstractDockerHelper {
 
     @Test
     void upCreatesContainer() throws Exception {
-        String composeContent = """
+        var runContext = runContextFactory.of();
+
+        var composeContent = """
             services:
               test_service:
                 image: alpine:3.19
                 command: ["sh", "-c", "sleep 30"]
             """;
 
-        Compose upTask = Compose.builder()
+        var upTask = Compose.builder()
             .id("compose-up")
             .type(Compose.class.getName())
             .composeFile(Property.ofValue(composeContent))
@@ -41,11 +43,10 @@ class ComposeTest extends AbstractDockerHelper {
             )))
             .build();
 
-        RunContext upContext = TestsUtils.mockRunContext(runContextFactory, upTask, ImmutableMap.of());
-        upTask.run(upContext);
+        upTask.run(runContext);
 
         boolean containerFound;
-        try (DockerClient client = new AbstractDockerHelper().getDockerClient(upContext, null, null, null)) {
+        try (DockerClient client = new AbstractDockerHelper().getDockerClient(runContext, null, null, null)) {
             var containers = client.listContainersCmd()
                 .withShowAll(true)
                 .exec();
@@ -59,7 +60,7 @@ class ComposeTest extends AbstractDockerHelper {
 
         assertThat(containerFound, is(true));
 
-        Compose downTask = Compose.builder()
+        var downTask = Compose.builder()
             .id("compose-down")
             .type(Compose.class.getName())
             .composeFile(Property.ofValue(composeContent))
@@ -69,7 +70,6 @@ class ComposeTest extends AbstractDockerHelper {
             )))
             .build();
 
-        RunContext downContext = TestsUtils.mockRunContext(runContextFactory, downTask, ImmutableMap.of());
-        downTask.run(downContext);
+        downTask.run(runContext);
     }
 }
