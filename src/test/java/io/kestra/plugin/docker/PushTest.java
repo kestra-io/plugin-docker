@@ -25,7 +25,7 @@ public class PushTest extends AbstractDockerHelper {
 
     @Test
     void pushToLocalRegistryAndPullBack() throws Exception {
-        RunContext runContext = runContextFactory.of();
+        var runContext = runContextFactory.of();
 
         String localTag = helper.getPrivateImage();
         String registry = helper.getRegistry();
@@ -44,19 +44,18 @@ public class PushTest extends AbstractDockerHelper {
             .password(Property.ofValue(helper.getPassword()))
             .build();
 
-        Image imageTask = Image.builder()
+        var tagTask = Tag.builder()
             .id("tag")
-            .type(Image.class.getName())
-            .command(Property.ofValue(Image.Command.TAG))
+            .type(Tag.class.getName())
             .sourceImage(Property.ofValue(localTag))
             .targetImage(Property.ofValue(remoteTag))
             .credentials(credentials)
             .build();
 
-        RunContext tagContext = TestsUtils.mockRunContext(runContextFactory, imageTask, ImmutableMap.of());
-        imageTask.run(tagContext);
+        var tagContext = TestsUtils.mockRunContext(runContextFactory, tagTask, ImmutableMap.of());
+        tagTask.run(tagContext);
 
-        Push pushTask = Push.builder()
+        var pushTask = Push.builder()
             .id("push")
             .type(Push.class.getName())
             .tags(Property.ofValue(List.of(remoteTag)))
@@ -69,7 +68,7 @@ public class PushTest extends AbstractDockerHelper {
         helper.rmImageIfExists(runContext, remoteTag, credentials);
         assertThat(helper.getImageId(runContext, remoteTag, credentials), nullValue());
 
-        Pull pullTask = Pull.builder()
+        var pullTask = Pull.builder()
             .id("pull")
             .type(Pull.class.getName())
             .image(Property.ofValue(remoteTag))

@@ -17,7 +17,10 @@ import lombok.experimental.SuperBuilder;
 
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -100,23 +103,23 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
 
     private Path resolveComposeFile(RunContext runContext) throws Exception {
         var workingDir = runContext.workingDir();
-        String value = runContext.render(this.composeFile).as(String.class).orElseThrow();
+        var rComposeFile = runContext.render(this.composeFile).as(String.class).orElseThrow();
 
-        if (value.startsWith("kestra://")) {
+        if (rComposeFile.startsWith("kestra://")) {
             Path tempFile = workingDir.createTempFile(".yaml");
-            try (InputStream in = runContext.storage().getFile(URI.create(value))) {
-                java.nio.file.Files.copy(in, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            try (InputStream in = runContext.storage().getFile(URI.create(rComposeFile))) {
+                Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
             }
             return tempFile;
         }
 
-        Path candidate = workingDir.resolve(Path.of(value));
+        Path candidate = workingDir.resolve(Path.of(rComposeFile));
         if (candidate.toFile().exists()) {
             return candidate;
         }
 
         return workingDir.createTempFile(
-            value.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+            rComposeFile.getBytes(StandardCharsets.UTF_8),
             ".yaml"
         );
     }

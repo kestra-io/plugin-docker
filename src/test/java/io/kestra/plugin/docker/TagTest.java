@@ -16,7 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;
 
 @KestraTest
-class ImageTest {
+class TagTest {
     @Inject
     RunContextFactory runContextFactory;
 
@@ -40,10 +40,9 @@ class ImageTest {
         Build.Output output = build.run(buildContext);
         assertThat(output.getImageId(), notNullValue());
 
-        Image imageTask = Image.builder()
+        Tag imageTask = Tag.builder()
             .id("tag")
-            .type(Image.class.getName())
-            .command(Property.ofValue(Image.Command.TAG))
+            .type(Tag.class.getName())
             .sourceImage(Property.ofValue("image-source:unit"))
             .targetImage(Property.ofValue("image-target:unit"))
             .build();
