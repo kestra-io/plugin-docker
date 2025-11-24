@@ -155,29 +155,29 @@ import java.util.stream.Collectors;
 )
 public class Build extends AbstractDocker implements RunnableTask<Build.Output>, NamespaceFilesInterface, InputFilesInterface {
     @Schema(
-        title = "The contents of your Dockerfile passed as a string, or a path to the Dockerfile"
+        title = "The contents of your Dockerfile passed as a string or a path to the Dockerfile"
     )
     private Property<String> dockerfile;
 
     @Schema(
-        title = "The target platform for the image e.g. linux/amd64."
+        title = "The target platform for the image (e.g., linux/amd64)"
     )
     private Property<List<String>> platforms;
 
     @Schema(
-        title = "Whether to push the image to a remote container registry."
+        title = "Whether to push the image to a remote container registry"
     )
     @Builder.Default
     private Property<Boolean> push = Property.ofValue(false);
 
     @Schema(
-        title = "Always attempt to pull the latest version of the base image."
+        title = "Always attempt to pull the latest version of the base image"
     )
     @Builder.Default
     private Property<Boolean> pull = Property.ofValue(true);
 
     @Schema(
-        title = "The list of tag of this image.",
+        title = "The list of tags for this image",
         description = "If pushing to a custom registry, the tag should include the registry URL. " +
             "Note that if you want to push to an insecure registry (HTTP), you need to edit the `/etc/docker/daemon.json` file on your Kestra host to [this](https://gist.github.com/brian-mulier-p/0c5a0ae85e83a179d6e93b22cb471934) and restart docker service (`sudo systemctl daemon-reload && sudo systemctl restart docker`)."
     )
@@ -185,12 +185,12 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
     private Property<List<String>> tags;
 
     @Schema(
-        title = "Optional build arguments in a `key: value` format."
+        title = "Optional build arguments in a `key: value` format"
     )
     protected Property<Map<String, String>> buildArgs;
 
     @Schema(
-        title = "Additional metadata for the image in a `key: value` format."
+        title = "Additional metadata for the image in a `key: value` format"
     )
     protected Property<Map<String, String>> labels;
 

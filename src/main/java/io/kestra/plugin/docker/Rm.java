@@ -43,27 +43,27 @@ import java.util.List;
 )
 public class Rm extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "Containers ID's.",
-        description = "List of containers IDs to remove"
+        title = "Container IDs",
+        description = "List of container IDs to remove"
     )
     protected Property<List<String>> containerIds;
 
     @Schema(
-        title = "Images ID's.",
-        description = "List of images ID's to remove"
+        title = "Image IDs",
+        description = "List of image IDs to remove"
     )
     protected Property<List<String>> imageIds;
 
     @Schema(
-        title = "Remove volumes.",
-        description = "Remove volumes associated to the container"
+        title = "Remove volumes",
+        description = "Remove volumes associated with the container"
     )
     @Builder.Default
     protected Property<Boolean> removeVolumes = Property.ofValue(Boolean.FALSE);
 
     @Schema(
-        title = "Force.",
-        description = "Use flag --force to remove images and containers"
+        title = "Force",
+        description = "Use flag `--force` to remove images and containers"
     )
     @Builder.Default
     protected Property<Boolean> force = Property.ofValue(Boolean.FALSE);

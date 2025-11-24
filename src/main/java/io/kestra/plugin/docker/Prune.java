@@ -22,7 +22,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Prune unused containers, images, networks, volumes.",
+    title = "Prune unused containers, images, networks, and volumes.",
     description = "Use this task to clean your environment and delete unused containers/images/networks/volumes"
 )
 @Plugin(
@@ -59,26 +59,26 @@ public class Prune extends AbstractDocker implements RunnableTask<VoidOutput> {
     Property<PruneType> pruneType;
 
     @Schema(
-        title = "Dangling.",
+        title = "Dangling",
         description = """
             When set to true, prune only unused and untagged images.
-            When set to false, all unused images are pruned. Meaningful only for IMAGES prune type
+            When set to false, all unused images are pruned. Meaningful only for IMAGES prune types.
             """
     )
     @Builder.Default
     Property<Boolean> dangling = Property.ofValue(Boolean.FALSE);
 
     @Schema(
-        title = "Until filter.",
+        title = "Until filter",
         description = """
-            Prune containers created before this timestamp Meaningful only for CONTAINERS and IMAGES prune type
-            Can be Unix timestamps, date formatted timestamps, or Go duration strings (e. g. 10m, 1h30m) computed relative to the daemon machine’s time.
+            Prune containers created before this timestamp. Meaningful only for CONTAINERS and IMAGES prune types.
+            Can be Unix timestamps, date formatted timestamps, or Go duration strings (e.g., 10m, 1h30m) computed relative to the daemon machine’s time.
             """
     )
     Property<String> until;
 
     @Schema(
-        title = "Label filters.",
+        title = "Label filters",
         description = "Prune containers with the specified labels."
     )
     Property<List<String>> labelFilters;

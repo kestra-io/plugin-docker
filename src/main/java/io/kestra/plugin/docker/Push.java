@@ -75,7 +75,7 @@ import java.util.stream.Collectors;
 )
 public class Push extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "The list of tags to push.",
+        title = "The list of tags to push",
         description = "Each tag should be a fully qualified image reference if pushing to a custom registry."
     )
     @NotNull

@@ -41,11 +41,11 @@ import lombok.experimental.SuperBuilder;
 )
 public class Tag extends AbstractDocker implements RunnableTask<VoidOutput> {
 
-    @Schema(title = "Source image name or ID.")
+    @Schema(title = "Source image name or ID")
     @NotNull
     private Property<String> sourceImage;
 
-    @Schema(title = "Target image name.")
+    @Schema(title = "Target image name")
     @NotNull
     private Property<String> targetImage;
 

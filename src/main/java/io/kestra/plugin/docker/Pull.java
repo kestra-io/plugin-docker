@@ -28,7 +28,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Plugin(
     examples = {
         @Example(
-            title = "Pull a docker image",
+            title = "Pull a Docker image",
             full = true,
             code = """
                 id: docker_pull
@@ -44,7 +44,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 )
 public class Pull extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "Docker image to use."
+        title = "Docker image to use"
     )
     @NotNull
     protected Property<String> image;

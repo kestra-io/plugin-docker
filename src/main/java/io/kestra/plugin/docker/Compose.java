@@ -33,7 +33,7 @@ import java.util.List;
 @Plugin(
     examples = {
         @Example(
-            title = "Run docker compose up -d using an inline compose file",
+            title = "Run `docker compose up -d` using an inline compose file",
             full = true,
             code = """
                 id: docker_compose_up
@@ -56,14 +56,14 @@ import java.util.List;
 public class Compose extends AbstractExecScript implements RunnableTask<ScriptOutput> {
 
     @Schema(
-        title = "The compose file (inline YAML, path in working directory, or Kestra URI)."
+        title = "The compose file (can be passed as an inline YAML, a path in working directory, or a Kestra URI)"
     )
     @NotNull
     @PluginProperty(internalStorageURI = true)
     private Property<String> composeFile;
 
     @Schema(
-        title = "Arguments passed AFTER `docker compose -f <file>`.",
+        title = "Arguments passed AFTER `docker compose -f <file>`",
         description = "Example: ['up', '-d'], ['logs', '-f'], ['exec', 'web', 'ls']"
     )
     @NotNull
