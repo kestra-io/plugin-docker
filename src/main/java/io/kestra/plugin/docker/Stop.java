@@ -23,7 +23,7 @@ import lombok.experimental.SuperBuilder;
 @Plugin(
     examples = {
         @Example(
-            title = "Kill a docker container",
+            title = "Kill a Docker container",
             full = true,
             code = """
                 id: docker_stop
@@ -40,16 +40,16 @@ import lombok.experimental.SuperBuilder;
 )
 public class Stop extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "The container id to stop."
+        title = "The container ID to stop"
     )
     private Property<String> containerId;
 
-    @Schema(title = "Does a kill or a stop command will be used.")
+    @Schema(title = "Use a kill or a stop command")
     @Builder.Default
     @NotNull
     private Property<Boolean> kill = Property.ofValue(false);
 
-    @Schema(title = "Does we will remove the container.")
+    @Schema(title = "Removes the container after stopping it")
     @Builder.Default
     @NotNull
     private Property<Boolean> delete = Property.ofValue(true);

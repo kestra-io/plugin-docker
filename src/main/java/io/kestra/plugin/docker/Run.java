@@ -119,18 +119,18 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 )
 public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
     @Schema(
-        title = "Docker image to use."
+        title = "Docker image"
     )
     @NotNull
     protected Property<String> containerImage;
 
     @Schema(
-        title = "User in the Docker container."
+        title = "Docker container User"
     )
     protected Property<String> user;
 
     @Schema(
-        title = "Docker entrypoint to use."
+        title = "Docker entrypoint"
     )
     protected Property<List<String>> entryPoint;
 
@@ -140,47 +140,47 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     protected Property<List<String>> extraHosts;
 
     @Schema(
-        title = "Docker network mode to use e.g. `host`, `none`, etc."
+        title = "Docker network mode to use (e.g., `host`, `none`, etc.)"
     )
     protected Property<String> networkMode;
 
     @Schema(
-        title = "List of port bindings.",
+        title = "List of port bindings",
         description = "Corresponds to the `--publish` (`-p`) option of the docker run CLI command using the format `ip:dockerHostPort:containerPort/protocol`. \n" +
-            "Possible example :\n" +
-            "- `8080:80/udp`" +
-            "- `127.0.0.1:8080:80`" +
+            "Possible examples:\n" +
+            "- `8080:80/udp`\n" +
+            "- `127.0.0.1:8080:80`\n" +
             "- `127.0.0.1:8080:80/udp`"
     )
     @PluginProperty(dynamic = true)
     protected Property<List<String>> portBindings;
 
     @Schema(
-        title = "List of volumes to mount.",
+        title = "List of volumes to mount",
         description = """
-            Must be a valid mount expression as string, example : `/home/user:/app`.
+            Must be a valid mount expression as a string, for example: `/home/user:/app`.
 
-            Volumes mount are disabled by default for security reasons; you must enable them on server configuration by setting `kestra.tasks.scripts.docker.volume-enabled` to `true`.
+            Volume mounts are disabled by default for security reasons; you must enable them on server configuration by setting `kestra.tasks.scripts.docker.volume-enabled` to `true`.
             """
     )
     @PluginProperty(dynamic = true)
     protected Property<List<String>> volumes;
 
     @Schema(
-        title = "The pull policy for an image.",
+        title = "The pull policy for an image",
         description = "Pull policy can be used to prevent pulling of an already existing image `IF_NOT_PRESENT`, or can be set to `ALWAYS` to pull the latest version of the image even if an image with the same tag already exists."
     )
     @Builder.Default
     protected Property<PullPolicy> pullPolicy = Property.ofValue(PullPolicy.IF_NOT_PRESENT);
 
     @Schema(
-        title = "A list of device requests to be sent to device drivers."
+        title = "A list of device requests to be sent to device drivers"
     )
     @PluginProperty
     protected List<DeviceRequest> deviceRequests;
 
     @Schema(
-        title = "Limits the CPU usage to a given maximum threshold value.",
+        title = "Limits the CPU usage to a given maximum threshold value",
         description = "By default, each container’s access to the host machine’s CPU cycles is unlimited. " +
             "You can set various constraints to limit a given container’s access to the host machine’s CPU cycles."
     )
@@ -188,7 +188,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     protected Cpu cpu;
 
     @Schema(
-        title = "Limits memory usage to a given maximum threshold value.",
+        title = "Limits memory usage to a given maximum threshold value",
         description = "Docker can enforce hard memory limits, which allow the container to use no more than a " +
             "given amount of user or system memory, or soft limits, which allow the container to use as much " +
             "memory as it needs unless certain conditions are met, such as when the kernel detects low memory " +
@@ -199,23 +199,23 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     protected Memory memory;
 
     @Schema(
-        title = "Size of `/dev/shm` in bytes.",
+        title = "Size of `/dev/shm` in bytes",
         description = "The size must be greater than 0. If omitted, the system uses 64MB."
     )
     private Property<String> shmSize;
 
     @Schema(
-        title = "Give extended privileges to this container."
+        title = "Give extended privileges to this container"
     )
     private Property<Boolean> privileged;
 
     @Schema(
-        title = "Additional environment variables for the Docker container."
+        title = "Additional environment variables for the Docker container"
     )
     private Property<Map<String, String>> env;
 
     @Schema(
-        title = "Not used anymore, will be removed soon"
+        title = "Not used anymore, will be removed in a future version"
     )
     @Deprecated
     private Property<Boolean> warningOnStdErr;
@@ -234,7 +234,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
 
     @Builder.Default
     @Schema(
-        title = "Whether to wait for the container to exit, or simply start it."
+        title = "Whether to wait for the container to exit, or simply start it"
     )
     private final Property<Boolean> wait = Property.ofValue(true);
 
