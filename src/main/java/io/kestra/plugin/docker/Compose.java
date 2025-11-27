@@ -34,7 +34,7 @@ import java.util.List;
         This task runs `docker compose` using Kestra’s task runner.
         To work correctly, the runner must have access to a Docker daemon.
 
-        ## To enable volume mounting for Docker task runner (disabled by default)
+        ### To enable volume mounting for Docker task runner (disabled by default)
 
         ```yaml
         plugins:
@@ -44,7 +44,7 @@ import java.util.List;
                 volume-enabled: true
         ```
 
-        ## Docker task runner
+        ### Docker task runner
         Mount the Docker socket so the runner can talk to the host engine:
 
         ```yaml
@@ -54,10 +54,10 @@ import java.util.List;
             - /var/run/docker.sock:/var/run/docker.sock
         ```
 
-        ## Process runner
+        ### Process runner
         Run the Compose task on a worker where Docker is available in the PATH.
 
-        ## On Kubernetes
+        ### On Kubernetes
         The worker must provide access to a Docker daemon (e.g., via a DinD sidecar).
         """
 )
