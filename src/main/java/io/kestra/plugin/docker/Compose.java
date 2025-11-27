@@ -94,9 +94,15 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
     @Schema(
         title = "The compose file (can be passed as an inline YAML, a path in working directory, or a Kestra URI)"
     )
-    @NotNull
     @PluginProperty(internalStorageURI = true)
     private Property<String> composeFile;
+
+    @Schema(
+        title = "List of Compose files to load.",
+        description = "If multiple files are provided, they are passed in order using repeated `-f` flags."
+    )
+    @PluginProperty(internalStorageURI = true)
+    private Property<List<String>> composeFiles;
 
     @Builder.Default
     protected Property<String> containerImage = Property.ofValue(DEFAULT_IMAGE);
@@ -111,13 +117,17 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
-        Path composePath = resolveComposeFile(runContext);
+        var composePaths = resolveComposeFiles(runContext);
 
         List<String> args = new ArrayList<>();
         args.add("docker");
         args.add("compose");
-        args.add("-f");
-        args.add(composePath.toString());
+
+        for (Path path : composePaths) {
+            args.add("-f");
+            args.add(path.toString());
+        }
+
         args.addAll(runContext.render(composeArgs).asList(String.class));
 
         runContext.logger().info("Running command: {}", String.join(" ", args));
@@ -128,26 +138,40 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
             .run();
     }
 
-    private Path resolveComposeFile(RunContext runContext) throws Exception {
+    private List<Path> resolveComposeFiles(RunContext runContext) throws Exception {
         var workingDir = runContext.workingDir();
-        var rComposeFile = runContext.render(this.composeFile).as(String.class).orElseThrow();
 
-        if (rComposeFile.startsWith("kestra://")) {
-            Path tempFile = workingDir.createTempFile(".yaml");
-            try (InputStream in = runContext.storage().getFile(URI.create(rComposeFile))) {
-                Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+        var rComposeFiles = runContext.render(this.composeFiles).asList(String.class);
+
+        if (rComposeFiles == null || rComposeFiles.isEmpty()) {
+            var rComposeFile = runContext.render(this.composeFile).as(String.class).orElse(null);
+            if (rComposeFile == null) {
+                return List.of();
             }
-            return tempFile;
+            rComposeFiles = List.of(rComposeFile);
         }
 
-        Path candidate = workingDir.resolve(Path.of(rComposeFile));
-        if (candidate.toFile().exists()) {
-            return candidate;
+        List<Path> paths = new ArrayList<>();
+        for (String composeFile : rComposeFiles) {
+
+            if (composeFile.startsWith("kestra://")) {
+                Path tempFile = workingDir.createTempFile(".yaml");
+                try (InputStream in = runContext.storage().getFile(URI.create(composeFile))) {
+                    Files.copy(in, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                }
+                paths.add(tempFile);
+                continue;
+            }
+
+            Path candidate = workingDir.resolve(Path.of(composeFile));
+            if (candidate.toFile().exists()) {
+                paths.add(candidate);
+                continue;
+            }
+
+            paths.add(workingDir.createTempFile(composeFile.getBytes(StandardCharsets.UTF_8), ".yaml"));
         }
 
-        return workingDir.createTempFile(
-            rComposeFile.getBytes(StandardCharsets.UTF_8),
-            ".yaml"
-        );
+        return paths;
     }
 }
