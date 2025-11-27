@@ -35,7 +35,10 @@ class ComposeTest extends AbstractDockerHelper {
             .id("compose-up")
             .type(Compose.class.getName())
             .composeFile(Property.ofValue(composeContent))
-            .taskRunner(Docker.builder().type(Docker.instance().getType()).volumes(List.of("/var/run/docker.sock:/var/run/docker.sock")).build())
+            .taskRunner(Docker.builder()
+                .type(Docker.instance().getType())
+                .volumes(List.of("/var/run/docker.sock:/var/run/docker.sock"))
+                .build())
             .composeArgs(Property.ofValue(List.of(
                 "-p", "kestra_compose_test",
                 "up",
@@ -65,7 +68,10 @@ class ComposeTest extends AbstractDockerHelper {
             .id("compose-down")
             .type(Compose.class.getName())
             .composeFile(Property.ofValue(composeContent))
-            .taskRunner(Docker.builder().type(Docker.instance().getType()).volumes(List.of("/var/run/docker.sock:/var/run/docker.sock")).build())
+            .taskRunner(Docker.builder()
+                .type(Docker.instance().getType())
+                .volumes(List.of("/var/run/docker.sock:/var/run/docker.sock"))
+                .build())
             .composeArgs(Property.ofValue(List.of(
                 "-p", "kestra_compose_test",
                 "down"
