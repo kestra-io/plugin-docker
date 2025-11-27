@@ -7,3 +7,8 @@ kestra:
     type: local
     local:
       base-path: /tmp/unittest
+  plugins:
+    configurations:
+      - type: io.kestra.plugin.scripts.runner.docker.Docker
+        values:
+          volume-enabled: true

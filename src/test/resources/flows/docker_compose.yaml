@@ -12,6 +12,10 @@ tasks:
 
   - id: up
     type: io.kestra.plugin.docker.Compose
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     composeArgs:
       - up
       - -d
