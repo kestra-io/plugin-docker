@@ -1,16 +1,16 @@
 package io.kestra.plugin.docker;
 
 import com.github.dockerjava.api.DockerClient;
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.scripts.runner.docker.Docker;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -19,7 +19,6 @@ import static org.hamcrest.Matchers.is;
 class ComposeTest extends AbstractDockerHelper {
     @Inject
     RunContextFactory runContextFactory;
-
 
     @Test
     void upCreatesContainer() throws Exception {
@@ -36,6 +35,7 @@ class ComposeTest extends AbstractDockerHelper {
             .id("compose-up")
             .type(Compose.class.getName())
             .composeFile(Property.ofValue(composeContent))
+            .taskRunner(Docker.builder().type(Docker.instance().getType()).volumes(List.of("/var/run/docker.sock:/var/run/docker.sock")).build())
             .composeArgs(Property.ofValue(List.of(
                 "-p", "kestra_compose_test",
                 "up",
@@ -43,6 +43,7 @@ class ComposeTest extends AbstractDockerHelper {
             )))
             .build();
 
+        runContext = TestsUtils.mockRunContext(runContextFactory, upTask, Map.of());
         upTask.run(runContext);
 
         boolean containerFound;
@@ -64,12 +65,14 @@ class ComposeTest extends AbstractDockerHelper {
             .id("compose-down")
             .type(Compose.class.getName())
             .composeFile(Property.ofValue(composeContent))
+            .taskRunner(Docker.builder().type(Docker.instance().getType()).volumes(List.of("/var/run/docker.sock:/var/run/docker.sock")).build())
             .composeArgs(Property.ofValue(List.of(
                 "-p", "kestra_compose_test",
                 "down"
             )))
             .build();
 
+        runContext = TestsUtils.mockRunContext(runContextFactory, upTask, Map.of());
         downTask.run(runContext);
     }
 }
