@@ -25,7 +25,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run a Docker container."
+    title = "Run a Docker container with runtime controls",
+    description = "Starts a container using the Docker task runner or host daemon, with optional waits, resource limits, port/volume bindings, and registry credentials. Waits for exit by default; volume mounts are disabled unless enabled in `kestra.tasks.scripts.docker.volume-enabled`."
 )
 @Plugin(
     examples = {
@@ -119,28 +120,33 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 )
 public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, NamespaceFilesInterface, InputFilesInterface, OutputFilesInterface {
     @Schema(
-        title = "Docker image"
+        title = "Container image",
+        description = "Image reference; if credentials include a registry, it is prepended when missing."
     )
     @NotNull
     protected Property<String> containerImage;
 
     @Schema(
-        title = "Docker container User"
+        title = "Container user",
+        description = "Optional user/UID to run the process as."
     )
     protected Property<String> user;
 
     @Schema(
-        title = "Docker entrypoint"
+        title = "Entrypoint",
+        description = "Override the image entrypoint; empty keeps the image default."
     )
     protected Property<List<String>> entryPoint;
 
     @Schema(
-        title = "Extra hostname mappings to the container network interface configuration."
+        title = "Extra host entries",
+        description = "List of `host:ip` mappings added to /etc/hosts."
     )
     protected Property<List<String>> extraHosts;
 
     @Schema(
-        title = "Docker network mode to use (e.g., `host`, `none`, etc.)"
+        title = "Network mode",
+        description = "Docker network mode such as `host`, `bridge`, or `none`."
     )
     protected Property<String> networkMode;
 
@@ -167,55 +173,54 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     protected Property<List<String>> volumes;
 
     @Schema(
-        title = "The pull policy for an image",
-        description = "Pull policy can be used to prevent pulling of an already existing image `IF_NOT_PRESENT`, or can be set to `ALWAYS` to pull the latest version of the image even if an image with the same tag already exists."
+        title = "Image pull policy",
+        description = "Defaults to IF_NOT_PRESENT; set to ALWAYS to refresh the image even when cached."
     )
     @Builder.Default
     protected Property<PullPolicy> pullPolicy = Property.ofValue(PullPolicy.IF_NOT_PRESENT);
 
     @Schema(
-        title = "A list of device requests to be sent to device drivers"
+        title = "Device requests",
+        description = "List of device requests forwarded to device drivers (e.g., GPUs)."
     )
     @PluginProperty
     protected List<DeviceRequest> deviceRequests;
 
     @Schema(
-        title = "Limits the CPU usage to a given maximum threshold value",
-        description = "By default, each container’s access to the host machine’s CPU cycles is unlimited. " +
-            "You can set various constraints to limit a given container’s access to the host machine’s CPU cycles."
+        title = "CPU limits",
+        description = "Set CPU quota/shares; otherwise the container can use all host CPU."
     )
     @PluginProperty
     protected Cpu cpu;
 
     @Schema(
-        title = "Limits memory usage to a given maximum threshold value",
-        description = "Docker can enforce hard memory limits, which allow the container to use no more than a " +
-            "given amount of user or system memory, or soft limits, which allow the container to use as much " +
-            "memory as it needs unless certain conditions are met, such as when the kernel detects low memory " +
-            "or contention on the host machine. Some of these options have different effects when used alone or " +
-            "when more than one option is set."
+        title = "Memory limits",
+        description = "Hard/soft memory limits; default is unlimited memory."
     )
     @PluginProperty
     protected Memory memory;
 
     @Schema(
-        title = "Size of `/dev/shm` in bytes",
-        description = "The size must be greater than 0. If omitted, the system uses 64MB."
+        title = "Shared memory size",
+        description = "Bytes for /dev/shm; defaults to 64MB when not set."
     )
     private Property<String> shmSize;
 
     @Schema(
-        title = "Give extended privileges to this container"
+        title = "Privileged container",
+        description = "If true, runs the container with `--privileged`; use cautiously."
     )
     private Property<Boolean> privileged;
 
     @Schema(
-        title = "Additional environment variables for the Docker container"
+        title = "Environment variables",
+        description = "Key/value map rendered before launching the container."
     )
     private Property<Map<String, String>> env;
 
     @Schema(
-        title = "Not used anymore, will be removed in a future version"
+        title = "Deprecated: warningOnStdErr",
+        description = "Deprecated and ignored; will be removed in a future version."
     )
     @Deprecated
     private Property<Boolean> warningOnStdErr;
@@ -227,14 +232,16 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
     private Property<List<String>> outputFiles;
 
     @Schema(
-        title = "The commands to run"
+        title = "Commands to run",
+        description = "Command/args executed inside the container; empty uses the image CMD."
     )
     @Builder.Default
     private Property<List<String>> commands = Property.ofValue(new ArrayList<>());
 
     @Builder.Default
     @Schema(
-        title = "Whether to wait for the container to exit, or simply start it"
+        title = "Wait for container exit",
+        description = "Defaults to true; set false to start and return immediately."
     )
     private final Property<Boolean> wait = Property.ofValue(true);
 

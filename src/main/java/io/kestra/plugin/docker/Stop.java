@@ -18,7 +18,8 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Stop a Docker container."
+    title = "Stop or kill a Docker container",
+    description = "Stops a running container by default, or kills it when `kill` is true, then optionally deletes it. Defaults: kill=false, delete=true."
 )
 @Plugin(
     examples = {
@@ -40,16 +41,23 @@ import lombok.experimental.SuperBuilder;
 )
 public class Stop extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "The container ID to stop"
+        title = "Container ID",
+        description = "ID of the container to stop or kill."
     )
     private Property<String> containerId;
 
-    @Schema(title = "Use a kill or a stop command")
+    @Schema(
+        title = "Kill instead of stop",
+        description = "When true, sends SIGKILL; otherwise uses a graceful stop."
+    )
     @Builder.Default
     @NotNull
     private Property<Boolean> kill = Property.ofValue(false);
 
-    @Schema(title = "Removes the container after stopping it")
+    @Schema(
+        title = "Delete container after stop",
+        description = "Defaults to true; set false to keep the container after stopping/killing."
+    )
     @Builder.Default
     @NotNull
     private Property<Boolean> delete = Property.ofValue(true);

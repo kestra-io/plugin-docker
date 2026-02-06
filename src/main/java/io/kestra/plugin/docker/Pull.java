@@ -23,7 +23,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Pull a Docker image."
+    title = "Pull a Docker image from a registry",
+    description = "Pulls an image/tag using the configured Docker daemon. If registry credentials specify a registry host, it is prepended to the image name."
 )
 @Plugin(
     examples = {
@@ -44,7 +45,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 )
 public class Pull extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "Docker image to use"
+        title = "Image to pull",
+        description = "Image reference with optional tag; registry is prepended when provided via credentials."
     )
     @NotNull
     protected Property<String> image;

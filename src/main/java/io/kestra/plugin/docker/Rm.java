@@ -19,7 +19,8 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Remove a Docker image or container."
+    title = "Remove Docker containers or images",
+    description = "Deletes containers and/or images using the Docker daemon. Supports force deletion and removing attached volumes; defaults to safe (force=false, removeVolumes=false)."
 )
 @Plugin(
     examples = {
@@ -44,26 +45,26 @@ import java.util.List;
 public class Rm extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
         title = "Container IDs",
-        description = "List of container IDs to remove"
+        description = "List of container IDs to remove."
     )
     protected Property<List<String>> containerIds;
 
     @Schema(
         title = "Image IDs",
-        description = "List of image IDs to remove"
+        description = "List of image IDs to remove."
     )
     protected Property<List<String>> imageIds;
 
     @Schema(
         title = "Remove volumes",
-        description = "Remove volumes associated with the container"
+        description = "When true, also deletes volumes attached to containers being removed."
     )
     @Builder.Default
     protected Property<Boolean> removeVolumes = Property.ofValue(Boolean.FALSE);
 
     @Schema(
-        title = "Force",
-        description = "Use flag `--force` to remove images and containers"
+        title = "Force removal",
+        description = "Uses `--force` to delete running containers or referenced images."
     )
     @Builder.Default
     protected Property<Boolean> force = Property.ofValue(Boolean.FALSE);

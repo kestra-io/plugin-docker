@@ -23,7 +23,8 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Push one or more existing Docker images to a remote container registry."
+    title = "Push Docker images to a registry",
+    description = "Pushes existing local images by tag to a remote registry using the available Docker daemon and optional registry credentials. Tags must already exist locally."
 )
 @Plugin(
     examples = {
@@ -75,8 +76,8 @@ import java.util.stream.Collectors;
 )
 public class Push extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "The list of tags to push",
-        description = "Each tag should be a fully qualified image reference if pushing to a custom registry."
+        title = "Image tags to push",
+        description = "Provide one or more tags; use fully qualified references for custom registries."
     )
     @NotNull
     private Property<List<String>> tags;
