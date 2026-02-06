@@ -35,7 +35,8 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Build a Docker image and optionally push it to a remote container registry."
+    title = "Build and optionally push a Docker image",
+    description = "Builds an image from inline Dockerfile content or a path using the Docker daemon available to the task runner. Pulls the base image by default, tags are required, and pushing is optional with registry credentials; caller inherits daemon permissions."
 )
 @Plugin(
     examples = {
@@ -155,42 +156,47 @@ import java.util.stream.Collectors;
 )
 public class Build extends AbstractDocker implements RunnableTask<Build.Output>, NamespaceFilesInterface, InputFilesInterface {
     @Schema(
-        title = "The contents of your Dockerfile passed as a string or a path to the Dockerfile"
+        title = "Dockerfile content or path",
+        description = "Inline Dockerfile text, a relative path in the working directory, or a Kestra URI; inline content is stored as a temp file before build."
     )
     private Property<String> dockerfile;
 
     @Schema(
-        title = "The target platform for the image (e.g., linux/amd64)"
+        title = "Target platforms for the image",
+        description = "Each entry is passed to buildx as `--platform`; leave empty to use the daemon default."
     )
     private Property<List<String>> platforms;
 
     @Schema(
-        title = "Whether to push the image to a remote container registry"
+        title = "Push the image to a registry",
+        description = "Defaults to false; when true, tags are pushed using the provided credentials."
     )
     @Builder.Default
     private Property<Boolean> push = Property.ofValue(false);
 
     @Schema(
-        title = "Always attempt to pull the latest version of the base image"
+        title = "Pull the base image first",
+        description = "Defaults to true so the build uses the latest base image; set false to rely on cached layers."
     )
     @Builder.Default
     private Property<Boolean> pull = Property.ofValue(true);
 
     @Schema(
-        title = "The list of tags for this image",
-        description = "If pushing to a custom registry, the tag should include the registry URL. " +
-            "Note that if you want to push to an insecure registry (HTTP), you need to edit the `/etc/docker/daemon.json` file on your Kestra host to [this](https://gist.github.com/brian-mulier-p/0c5a0ae85e83a179d6e93b22cb471934) and restart docker service (`sudo systemctl daemon-reload && sudo systemctl restart docker`)."
+        title = "Image tags",
+        description = "Include the registry host for custom registries. For insecure HTTP registries, configure `/etc/docker/daemon.json` as shown in the linked [gist](https://gist.github.com/brian-mulier-p/0c5a0ae85e83a179d6e93b22cb471934) and restart Docker (`systemctl daemon-reload && systemctl restart docker`)."
     )
     @NotNull
     private Property<List<String>> tags;
 
     @Schema(
-        title = "Optional build arguments in a `key: value` format"
+        title = "Build arguments",
+        description = "Optional key/value map rendered before invoking the build."
     )
     protected Property<Map<String, String>> buildArgs;
 
     @Schema(
-        title = "Additional metadata for the image in a `key: value` format"
+        title = "Image labels",
+        description = "Key/value labels to apply to the built image."
     )
     protected Property<Map<String, String>> labels;
 
@@ -291,7 +297,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(
-            title = "The generated image id."
+            title = "Built image ID"
         )
         private String imageId;
     }

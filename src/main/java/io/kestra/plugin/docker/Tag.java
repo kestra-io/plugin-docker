@@ -19,7 +19,8 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Tag a Docker image."
+    title = "Retag a Docker image",
+    description = "Creates a new repository:tag for an existing local image using the Docker daemon."
 )
 @Plugin(
     examples = {
@@ -41,11 +42,17 @@ import lombok.experimental.SuperBuilder;
 )
 public class Tag extends AbstractDocker implements RunnableTask<VoidOutput> {
 
-    @Schema(title = "Source image name or ID")
+    @Schema(
+        title = "Source image",
+        description = "Existing image name or ID to retag."
+    )
     @NotNull
     private Property<String> sourceImage;
 
-    @Schema(title = "Target image name")
+    @Schema(
+        title = "Target image",
+        description = "Repository and tag to create; defaults to `latest` if no tag is provided."
+    )
     @NotNull
     private Property<String> targetImage;
 
