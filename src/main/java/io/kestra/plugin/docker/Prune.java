@@ -22,8 +22,8 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Prune unused containers, images, networks, and volumes.",
-    description = "Use this task to clean your environment and delete unused containers/images/networks/volumes"
+    title = "Prune unused Docker resources",
+    description = "Cleans up unused Docker build cache, containers, images, networks, or volumes via the daemon. Prune type is required; dangling defaults to false."
 )
 @Plugin(
     examples = {
@@ -45,41 +45,28 @@ import java.util.List;
 )
 public class Prune extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "Prune type.",
-        description = """
-    Type of docker object you want to prune :
-        - BUILD
-        - CONTAINERS
-        - IMAGES
-        - NETWORKS
-        - VOLUMES
-    """
+        title = "Prune type",
+        description = "One of BUILD, CONTAINERS, IMAGES, NETWORKS, or VOLUMES to target specific resources."
     )
     @NotNull
     Property<PruneType> pruneType;
 
     @Schema(
-        title = "Dangling",
-        description = """
-            When set to true, prune only unused and untagged images.
-            When set to false, all unused images are pruned. Meaningful only for IMAGES prune types.
-            """
+        title = "Dangling only",
+        description = "For IMAGES prune type: true prunes only unused untagged images; false prunes all unused images."
     )
     @Builder.Default
     Property<Boolean> dangling = Property.ofValue(Boolean.FALSE);
 
     @Schema(
         title = "Until filter",
-        description = """
-            Prune containers created before this timestamp. Meaningful only for CONTAINERS and IMAGES prune types.
-            Can be Unix timestamps, date formatted timestamps, or Go duration strings (e.g., 10m, 1h30m) computed relative to the daemon machine’s time.
-            """
+        description = "For CONTAINERS and IMAGES: prune items created before this timestamp or duration (e.g., 10m, 1h30m) using daemon time."
     )
     Property<String> until;
 
     @Schema(
         title = "Label filters",
-        description = "Prune containers with the specified labels."
+        description = "Optional labels to filter containers before pruning."
     )
     Property<List<String>> labelFilters;
 

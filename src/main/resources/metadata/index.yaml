@@ -1,8 +1,8 @@
 group: io.kestra.plugin.docker
 name: "docker"
 title: "Docker"
-description: "Tasks that build, run, and manage Docker images and containers through the Docker API."
-body: "Use these tasks to build and push images, run containers, execute Compose, tag or pull artifacts, stop/remove containers, and prune unused resources directly from Kestra workflows. They require access to a Docker daemon (host socket or remote host) and accept optional config/credentials for private registries alongside task-specific settings such as tags, compose files, and run-time options."
+description: "Docker tasks for building images, running containers, and managing artifacts from Kestra workflows."
+body: "Requires access to a Docker daemon via host socket or TCP endpoint; the caller inherits daemon permissions, so scope access carefully. Tasks cover build, push/pull, tagging, Compose execution, container lifecycle, and pruning. Registry auth is optional and set per task; pass tags, compose files, and run options explicitly."
 videos: []
 createdBy: "Kestra Core Team"
 managedBy: "Kestra Core Team"
