@@ -104,7 +104,7 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
 
     @Schema(
         title = "Compose command arguments",
-        description = "Arguments appended after `docker compose -f <file>` such as ['up','-d'] or ['logs','-f']; order is preserved."
+        description = "Arguments appended after `docker compose -f <file>` such as `['up','-d']` or `['logs','-f']`; order is preserved."
     )
     @NotNull
     @PluginProperty
