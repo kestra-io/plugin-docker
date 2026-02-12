@@ -29,12 +29,11 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run Docker Compose commands.",
+    title = "Run Docker Compose with inline or stored files",
     description = """
-        This task runs `docker compose` using Kestra’s task runner.
-        To work correctly, the runner must have access to a Docker daemon.
+        Runs `docker compose` via the configured task runner. The runner must reach a Docker daemon (mount the host socket or provide DinD). Volume mounting is disabled by default for the Docker task runner; enable `volume-enabled: true` if you need it.
 
-        ### To enable volume mounting for Docker task runner (disabled by default)
+        To enable volume mounting for Docker task runner (disabled by default):
 
         ```yaml
         plugins:
@@ -44,8 +43,7 @@ import java.util.List;
                 volume-enabled: true
         ```
 
-        ### Docker task runner
-        Mount the Docker socket so the runner can talk to the host engine:
+        Docker task runner: mount the Docker socket so the runner can talk to the host engine:
 
         ```yaml
         taskRunner:
@@ -54,11 +52,7 @@ import java.util.List;
             - /var/run/docker.sock:/var/run/docker.sock
         ```
 
-        ### Process runner
-        Run the Compose task on a worker where Docker is available in the PATH.
-
-        ### On Kubernetes
-        The worker must provide access to a Docker daemon (e.g., via a DinD sidecar).
+        On Kubernetes, ensure the worker has daemon access (e.g., DinD sidecar).
         """
 )
 @Plugin(
@@ -92,14 +86,15 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
     private static final String DEFAULT_IMAGE = "docker:latest";
 
     @Schema(
-        title = "The compose file (can be passed as an inline YAML, a path in working directory, or a Kestra URI)"
+        title = "Compose file",
+        description = "Inline YAML, relative path in the working directory, or a `kestra://` URI; inline content is written to a temp file before execution."
     )
     @PluginProperty(internalStorageURI = true)
     private Property<String> composeFile;
 
     @Schema(
-        title = "List of Compose files to load.",
-        description = "If multiple files are provided, they are passed in order using repeated `-f` flags."
+        title = "Compose files",
+        description = "Optional list passed in order with repeated `-f` flags; supports inline, relative paths, or `kestra://` URIs."
     )
     @PluginProperty(internalStorageURI = true)
     private Property<List<String>> composeFiles;
@@ -108,8 +103,8 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
     protected Property<String> containerImage = Property.ofValue(DEFAULT_IMAGE);
 
     @Schema(
-        title = "Arguments passed AFTER `docker compose -f <file>`",
-        description = "Example: ['up', '-d'], ['logs', '-f'], ['exec', 'web', 'ls']"
+        title = "Compose command arguments",
+        description = "Arguments appended after `docker compose -f <file>` such as `['up','-d']` or `['logs','-f']`; order is preserved."
     )
     @NotNull
     @PluginProperty
