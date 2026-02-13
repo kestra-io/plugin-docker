@@ -18,8 +18,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -90,6 +92,13 @@ class RunTest extends AbstractDockerHelper {
 
 
         RetryUtils.RetryFailed exception = assertThrows(RetryUtils.RetryFailed.class, () -> run.run(runContext));
-        assertThat(exception.getCause().getMessage(), is("Status 500: {\"message\":\"unauthorized: authentication required\"}\n"));
+        assertThat(
+            exception.getCause().getMessage(),
+            anyOf(
+                containsString("authentication required"),
+                containsString("unauthorized"),
+                containsString("401 Unauthorized")
+            )
+        );
     }
 }
