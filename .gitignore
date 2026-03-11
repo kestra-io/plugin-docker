@@ -18,3 +18,4 @@ src/test/java/io/kestra/plugin/docker/BuildAndPushTest.java
 allure-results/
 auth/.factorypath
 bin/
+.factorypath
