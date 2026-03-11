@@ -1,33 +1,30 @@
 package io.kestra.plugin.docker;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.*;
+import java.util.stream.Collectors;
+
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.command.BuildImageCmd;
 import com.github.dockerjava.api.model.BuildResponseItem;
-import com.github.dockerjava.api.model.PushResponseItem;
-import com.github.dockerjava.core.DefaultDockerClientConfig;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Metric;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Rethrow;
-import io.kestra.plugin.scripts.runner.docker.Credentials;
 import io.kestra.plugin.scripts.runner.docker.DockerService;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @SuperBuilder
 @ToString
@@ -206,7 +203,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        List<String> renderedTags = runContext.render(this.tags).asList(String.class).isEmpty() ? new ArrayList<>() :  runContext.render(this.tags).asList(String.class);
+        List<String> renderedTags = runContext.render(this.tags).asList(String.class).isEmpty() ? new ArrayList<>() : runContext.render(this.tags).asList(String.class);
         Set<String> tags = renderedTags.stream().map(this::removeScheme).collect(Collectors.toSet());
 
         if (this.namespaceFiles != null && Boolean.TRUE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
@@ -216,7 +213,8 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
                     runContext.render(this.namespaceFiles.getInclude()).asList(String.class),
                     runContext.render(this.namespaceFiles.getExclude()).asList(String.class)
                 )
-                .forEach(Rethrow.throwConsumer(namespaceFile -> {
+                .forEach(Rethrow.throwConsumer(namespaceFile ->
+                {
                     InputStream content = runContext.storage().getFile(namespaceFile.uri());
                     runContext.workingDir().putFile(Path.of(namespaceFile.path()), content);
                 }));
@@ -228,12 +226,13 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
 
         try (
             DockerClient dockerClient = DockerService.client(
-            runContext,
-            runContext.render(this.host).as(String.class).orElse(null),
-            this.getConfig(),
-            this.getCredentials(),
-            tags.iterator().next()
-        )) {
+                runContext,
+                runContext.render(this.host).as(String.class).orElse(null),
+                this.getConfig(),
+                this.getCredentials(),
+                tags.iterator().next()
+            )
+        ) {
             BuildImageCmd buildImageCmd = dockerClient.buildImageCmd()
                 .withPull(runContext.render(this.pull).as(Boolean.class).orElseThrow());
 
@@ -314,8 +313,9 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
         public void onNext(BuildResponseItem item) {
             super.onNext(item);
 
-            if (item.getRawValues().containsKey("stream") &&
-                !item.getRawValues().get("stream").toString().trim().isEmpty()
+            if (
+                item.getRawValues().containsKey("stream") &&
+                    !item.getRawValues().get("stream").toString().trim().isEmpty()
             ) {
                 this.runContext.logger().info("{}", item.getRawValues().get("stream").toString().trim());
             }

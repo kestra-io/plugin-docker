@@ -1,12 +1,14 @@
 package io.kestra.plugin.docker;
 
+import java.util.Objects;
+
 import com.github.dockerjava.api.async.ResultCallback;
 import com.github.dockerjava.api.model.PushResponseItem;
+
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.runners.RunContext;
-import lombok.Getter;
 
-import java.util.Objects;
+import lombok.Getter;
 
 @Getter
 public class PushResponseItemCallback extends ResultCallback.Adapter<PushResponseItem> {
@@ -29,15 +31,17 @@ public class PushResponseItemCallback extends ResultCallback.Adapter<PushRespons
         //noinspection deprecation
         if (item.getProgress() != null) {
             this.runContext.logger().debug("{} {}", item.getId(), item.getProgress());
-        } else if (item.getRawValues().containsKey("status") &&
-            !item.getRawValues().get("status").toString().trim().isEmpty()
+        } else if (
+            item.getRawValues().containsKey("status") &&
+                !item.getRawValues().get("status").toString().trim().isEmpty()
         ) {
             this.runContext.logger().info("{} {}", item.getId(), item.getRawValues().get("status").toString().trim());
         }
 
-        if (item.getProgressDetail() != null &&
-            item.getProgressDetail().getCurrent() != null &&
-            Objects.equals(item.getProgressDetail().getCurrent(), item.getProgressDetail().getTotal())
+        if (
+            item.getProgressDetail() != null &&
+                item.getProgressDetail().getCurrent() != null &&
+                Objects.equals(item.getProgressDetail().getCurrent(), item.getProgressDetail().getTotal())
         ) {
             runContext.metric(Counter.of("bytes", item.getProgressDetail().getTotal()));
         }

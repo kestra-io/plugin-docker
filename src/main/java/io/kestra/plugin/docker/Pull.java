@@ -1,6 +1,9 @@
 package io.kestra.plugin.docker;
 
+import java.util.Optional;
+
 import com.github.dockerjava.api.command.PullImageResultCallback;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -8,12 +11,11 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.scripts.runner.docker.DockerService;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 

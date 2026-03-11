@@ -1,7 +1,10 @@
 package io.kestra.plugin.docker;
 
+import java.util.List;
+
 import com.github.dockerjava.api.command.PruneCmd;
 import com.github.dockerjava.api.model.PruneType;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -9,12 +12,11 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.scripts.runner.docker.DockerService;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
 
 @SuperBuilder
 @ToString
@@ -78,7 +80,7 @@ public class Prune extends AbstractDocker implements RunnableTask<VoidOutput> {
             runContext.render(this.dangling).as(Boolean.class).ifPresent(pruneCmd::withDangling);
             runContext.render(this.until).as(String.class).ifPresent(pruneCmd::withUntilFilter);
 
-            List<String> renderedLabelFilters =  runContext.render(this.labelFilters).asList(String.class);
+            List<String> renderedLabelFilters = runContext.render(this.labelFilters).asList(String.class);
             pruneCmd.withLabelFilter(renderedLabelFilters.toArray(new String[0]));
 
             pruneCmd.exec();

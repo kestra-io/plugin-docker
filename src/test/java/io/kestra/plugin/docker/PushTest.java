@@ -1,16 +1,15 @@
 package io.kestra.plugin.docker;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.property.Property;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.plugin.scripts.runner.docker.Credentials;
-import jakarta.inject.Inject;
+import java.util.List;
+
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContextFactory;
+import io.kestra.plugin.scripts.runner.docker.Credentials;
+
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.notNullValue;

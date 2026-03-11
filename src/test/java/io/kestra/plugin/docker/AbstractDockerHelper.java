@@ -1,10 +1,15 @@
 package io.kestra.plugin.docker;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Config;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.google.common.collect.ImmutableMap;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
@@ -14,10 +19,6 @@ import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.plugin.scripts.runner.docker.Credentials;
 import io.kestra.plugin.scripts.runner.docker.Docker;
 import io.kestra.plugin.scripts.runner.docker.DockerService;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
 
 public class AbstractDockerHelper {
     public String getPassword() {
@@ -37,9 +38,10 @@ public class AbstractDockerHelper {
     }
 
     boolean containerExists(String containerId, RunContext runContext) throws IllegalVariableEvaluationException, IOException {
-        try(DockerClient client = getDockerClient(runContext, null, null, null)) {
-            for(Container container : client.listContainersCmd().withShowAll(true).exec()) {
-                if (container.getId().equals(containerId)) return true;
+        try (DockerClient client = getDockerClient(runContext, null, null, null)) {
+            for (Container container : client.listContainersCmd().withShowAll(true).exec()) {
+                if (container.getId().equals(containerId))
+                    return true;
             }
         }
         return false;
@@ -54,9 +56,10 @@ public class AbstractDockerHelper {
     }
 
     String getImageId(RunContext runContext, String image, Credentials credentials) throws IllegalVariableEvaluationException, IOException {
-        try(DockerClient client = getDockerClient(runContext, image, credentials, null)) {
+        try (DockerClient client = getDockerClient(runContext, image, credentials, null)) {
             List<Image> images = client.listImagesCmd().exec();
-            return images.stream().filter(i -> {
+            return images.stream().filter(i ->
+            {
                 for (String repoTag : i.getRepoTags()) {
                     if (repoTag.contains(image)) {
                         return true;
@@ -70,7 +73,7 @@ public class AbstractDockerHelper {
     void rmImageIfExists(RunContext runContext, String image, Credentials credentials) throws IllegalVariableEvaluationException, IOException {
         String id = getImageId(runContext, image, credentials);
         if (id != null) {
-            try(DockerClient client = getDockerClient(runContext, image, credentials, null)) {
+            try (DockerClient client = getDockerClient(runContext, image, credentials, null)) {
                 client.removeImageCmd(id)
                     .withForce(true)
                     .withNoPrune(false)
@@ -110,11 +113,11 @@ public class AbstractDockerHelper {
             .labels(Property.ofValue(Map.of(label, "true")))
             .tags(Property.ofValue(List.of(image)))
             .dockerfile(Property.ofValue("""
-                FROM ubuntu
-                ARG APT_PACKAGES=""
+                    FROM ubuntu
+                    ARG APT_PACKAGES=""
 
-                RUN apt-get update && apt-get install -y --no-install-recommends ${APT_PACKAGES};
-            """))
+                    RUN apt-get update && apt-get install -y --no-install-recommends ${APT_PACKAGES};
+                """))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());

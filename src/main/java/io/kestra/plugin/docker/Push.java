@@ -1,6 +1,9 @@
 package io.kestra.plugin.docker;
 
-import com.github.dockerjava.api.DockerClient;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -8,14 +11,11 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.scripts.runner.docker.DockerService;
+
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @SuperBuilder
 @ToString
@@ -93,13 +93,15 @@ public class Push extends AbstractDocker implements RunnableTask<VoidOutput> {
             .map(this::removeScheme)
             .collect(Collectors.toSet());
 
-        try (var dockerClient = DockerService.client(
-            runContext,
-            runContext.render(this.host).as(String.class).orElse(null),
-            this.getConfig(),
-            this.getCredentials(),
-            tagsWithoutScheme.iterator().next()
-        )) {
+        try (
+            var dockerClient = DockerService.client(
+                runContext,
+                runContext.render(this.host).as(String.class).orElse(null),
+                this.getConfig(),
+                this.getCredentials(),
+                tagsWithoutScheme.iterator().next()
+            )
+        ) {
             for (String tag : tagsWithoutScheme) {
                 PushResponseItemCallback callback = new PushResponseItemCallback(runContext);
                 dockerClient.pushImageCmd(tag)

@@ -1,16 +1,19 @@
 package io.kestra.plugin.docker;
 
+import java.util.List;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import com.github.dockerjava.api.DockerClient;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.scripts.runner.docker.Docker;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.List;
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -35,15 +38,21 @@ class ComposeTest extends AbstractDockerHelper {
             .id("compose-up")
             .type(Compose.class.getName())
             .composeFile(Property.ofValue(composeContent))
-            .taskRunner(Docker.builder()
-                .type(Docker.instance().getType())
-                .volumes(List.of("/var/run/docker.sock:/var/run/docker.sock"))
-                .build())
-            .composeArgs(Property.ofValue(List.of(
-                "-p", "kestra_compose_test",
-                "up",
-                "-d"
-            )))
+            .taskRunner(
+                Docker.builder()
+                    .type(Docker.instance().getType())
+                    .volumes(List.of("/var/run/docker.sock:/var/run/docker.sock"))
+                    .build()
+            )
+            .composeArgs(
+                Property.ofValue(
+                    List.of(
+                        "-p", "kestra_compose_test",
+                        "up",
+                        "-d"
+                    )
+                )
+            )
             .build();
 
         runContext = TestsUtils.mockRunContext(runContextFactory, upTask, Map.of());
@@ -55,8 +64,10 @@ class ComposeTest extends AbstractDockerHelper {
                 .withShowAll(true)
                 .exec();
 
-            containerFound = containers.stream().anyMatch(c -> {
-                if (c.getLabels() == null) return false;
+            containerFound = containers.stream().anyMatch(c ->
+            {
+                if (c.getLabels() == null)
+                    return false;
                 return "test_service".equals(c.getLabels().get("com.docker.compose.service")) &&
                     "kestra_compose_test".equals(c.getLabels().get("com.docker.compose.project"));
             });
@@ -68,14 +79,20 @@ class ComposeTest extends AbstractDockerHelper {
             .id("compose-down")
             .type(Compose.class.getName())
             .composeFile(Property.ofValue(composeContent))
-            .taskRunner(Docker.builder()
-                .type(Docker.instance().getType())
-                .volumes(List.of("/var/run/docker.sock:/var/run/docker.sock"))
-                .build())
-            .composeArgs(Property.ofValue(List.of(
-                "-p", "kestra_compose_test",
-                "down"
-            )))
+            .taskRunner(
+                Docker.builder()
+                    .type(Docker.instance().getType())
+                    .volumes(List.of("/var/run/docker.sock:/var/run/docker.sock"))
+                    .build()
+            )
+            .composeArgs(
+                Property.ofValue(
+                    List.of(
+                        "-p", "kestra_compose_test",
+                        "down"
+                    )
+                )
+            )
             .build();
 
         runContext = TestsUtils.mockRunContext(runContextFactory, upTask, Map.of());

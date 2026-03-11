@@ -1,15 +1,18 @@
 package io.kestra.plugin.docker;
 
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import com.github.dockerjava.api.model.PruneType;
+
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.TestsUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -27,7 +30,7 @@ class PruneTest extends AbstractDockerHelper {
         final String image2 = "unit-test-image2:1.2.3";
         final String label2 = "label-2";
 
-        buildImage(runContextFactory, image1,label1);
+        buildImage(runContextFactory, image1, label1);
         buildImage(runContextFactory, image2, label2);
 
         assertThat(imageExists(runContextFactory.of(), image1), is(true));
