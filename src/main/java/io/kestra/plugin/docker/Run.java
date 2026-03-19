@@ -253,8 +253,9 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
             .map(throwFunction(cred -> runContext.render(cred.getRegistry()).as(String.class).orElse(null)))
             .orElse(null);
 
-        if (registry != null && !image.startsWith(registry)) {
-            image = String.join("/", registry, image);
+        var registryHost = AbstractDocker.registryHostForImagePrefix(registry);
+        if (registryHost != null && !image.startsWith(registryHost)) {
+            image = String.join("/", registryHost, image);
         }
         TaskRunner<Docker.DockerTaskRunnerDetailResult> taskRunner = Docker
             .builder()
