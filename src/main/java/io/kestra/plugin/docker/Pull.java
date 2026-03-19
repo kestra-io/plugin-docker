@@ -60,8 +60,9 @@ public class Pull extends AbstractDocker implements RunnableTask<VoidOutput> {
             .map(throwFunction(cred -> runContext.render(cred.getRegistry()).as(String.class).orElse(null)))
             .orElse(null);
 
-        if (registry != null && !imageToPull.startsWith(registry)) {
-            imageToPull = String.join("/", registry, imageToPull);
+        var registryHost = AbstractDocker.registryHostForImagePrefix(registry);
+        if (registryHost != null && !imageToPull.startsWith(registryHost)) {
+            imageToPull = String.join("/", registryHost, imageToPull);
         }
 
         try (var client = DockerService.client(runContext, runContext.render(host).as(String.class).orElse(null), config, credentials, imageToPull)) {
