@@ -117,7 +117,7 @@ tasks:
             commands:
               - cat someDir/someDummyFile.txt > someDir/someOtherFile.txt
             volumes:
-              - "{{ 'someDir:someDir' }}"
+              - "{{ 'someDir:/someDir' }}"
             outputFiles:
               - someDir/someOtherFile.txt
 
