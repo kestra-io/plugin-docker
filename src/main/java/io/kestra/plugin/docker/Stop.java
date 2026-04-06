@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -45,6 +46,7 @@ public class Stop extends AbstractDocker implements RunnableTask<VoidOutput> {
         title = "Container ID",
         description = "ID of the container to stop or kill."
     )
+    @PluginProperty(group = "connection")
     private Property<String> containerId;
 
     @Schema(
@@ -53,6 +55,7 @@ public class Stop extends AbstractDocker implements RunnableTask<VoidOutput> {
     )
     @Builder.Default
     @NotNull
+    @PluginProperty(group = "advanced")
     private Property<Boolean> kill = Property.ofValue(false);
 
     @Schema(
@@ -61,6 +64,7 @@ public class Stop extends AbstractDocker implements RunnableTask<VoidOutput> {
     )
     @Builder.Default
     @NotNull
+    @PluginProperty(group = "advanced")
     private Property<Boolean> delete = Property.ofValue(true);
 
     @Override

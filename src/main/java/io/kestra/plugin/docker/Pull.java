@@ -18,6 +18,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -51,6 +52,7 @@ public class Pull extends AbstractDocker implements RunnableTask<VoidOutput> {
         description = "Image reference with optional tag; registry is prepended when provided via credentials."
     )
     @NotNull
+    @PluginProperty(group = "main")
     protected Property<String> image;
 
     @Override

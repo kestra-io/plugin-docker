@@ -13,6 +13,7 @@ import io.kestra.plugin.scripts.runner.docker.DockerService;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -48,12 +49,14 @@ public class Rm extends AbstractDocker implements RunnableTask<VoidOutput> {
         title = "Container IDs",
         description = "List of container IDs to remove."
     )
+    @PluginProperty(group = "connection")
     protected Property<List<String>> containerIds;
 
     @Schema(
         title = "Image IDs",
         description = "List of image IDs to remove."
     )
+    @PluginProperty(group = "advanced")
     protected Property<List<String>> imageIds;
 
     @Schema(
@@ -61,6 +64,7 @@ public class Rm extends AbstractDocker implements RunnableTask<VoidOutput> {
         description = "When true, also deletes volumes attached to containers being removed."
     )
     @Builder.Default
+    @PluginProperty(group = "destination")
     protected Property<Boolean> removeVolumes = Property.ofValue(Boolean.FALSE);
 
     @Schema(
@@ -68,6 +72,7 @@ public class Rm extends AbstractDocker implements RunnableTask<VoidOutput> {
         description = "Uses `--force` to delete running containers or referenced images."
     )
     @Builder.Default
+    @PluginProperty(group = "reliability")
     protected Property<Boolean> force = Property.ofValue(Boolean.FALSE);
 
     @Override

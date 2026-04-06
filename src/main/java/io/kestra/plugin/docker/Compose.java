@@ -90,17 +90,18 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
         title = "Compose file",
         description = "Inline YAML, relative path in the working directory, or a `kestra://` URI; inline content is written to a temp file before execution."
     )
-    @PluginProperty(internalStorageURI = true)
+    @PluginProperty(internalStorageURI = true, group = "source")
     private Property<String> composeFile;
 
     @Schema(
         title = "Compose files",
         description = "Optional list passed in order with repeated `-f` flags; supports inline, relative paths, or `kestra://` URIs."
     )
-    @PluginProperty(internalStorageURI = true)
+    @PluginProperty(internalStorageURI = true, group = "source")
     private Property<List<String>> composeFiles;
 
     @Builder.Default
+    @PluginProperty(group = "execution")
     protected Property<String> containerImage = Property.ofValue(DEFAULT_IMAGE);
 
     @Schema(
@@ -108,7 +109,7 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
         description = "Arguments appended after `docker compose -f <file>` such as `['up','-d']` or `['logs','-f']`; order is preserved."
     )
     @NotNull
-    @PluginProperty
+    @PluginProperty(group = "main")
     private Property<List<String>> composeArgs;
 
     @Override
