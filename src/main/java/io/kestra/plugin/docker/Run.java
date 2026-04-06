@@ -125,30 +125,35 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
         description = "Image reference; if credentials include a registry, it is prepended when missing."
     )
     @NotNull
+    @PluginProperty(group = "main")
     protected Property<String> containerImage;
 
     @Schema(
         title = "Container user",
         description = "Optional user/UID to run the process as."
     )
+    @PluginProperty(group = "advanced")
     protected Property<String> user;
 
     @Schema(
         title = "Entrypoint",
         description = "Override the image entrypoint; empty keeps the image default."
     )
+    @PluginProperty(group = "advanced")
     protected Property<List<String>> entryPoint;
 
     @Schema(
         title = "Extra host entries",
         description = "List of `host:ip` mappings added to /etc/hosts."
     )
+    @PluginProperty(group = "connection")
     protected Property<List<String>> extraHosts;
 
     @Schema(
         title = "Network mode",
         description = "Docker network mode such as `host`, `bridge`, or `none`."
     )
+    @PluginProperty(group = "advanced")
     protected Property<String> networkMode;
 
     @Schema(
@@ -159,7 +164,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
             "- `127.0.0.1:8080:80`\n" +
             "- `127.0.0.1:8080:80/udp`"
     )
-    @PluginProperty(dynamic = true)
+    @PluginProperty(dynamic = true, group = "connection")
     protected Property<List<String>> portBindings;
 
     @Schema(
@@ -170,7 +175,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
             Volume mounts are disabled by default for security reasons; you must enable them on server configuration by setting `kestra.tasks.scripts.docker.volume-enabled` to `true`.
             """
     )
-    @PluginProperty(dynamic = true)
+    @PluginProperty(dynamic = true, group = "advanced")
     protected Property<List<String>> volumes;
 
     @Schema(
@@ -178,45 +183,49 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
         description = "Defaults to IF_NOT_PRESENT; set to ALWAYS to refresh the image even when cached."
     )
     @Builder.Default
+    @PluginProperty(group = "advanced")
     protected Property<PullPolicy> pullPolicy = Property.ofValue(PullPolicy.IF_NOT_PRESENT);
 
     @Schema(
         title = "Device requests",
         description = "List of device requests forwarded to device drivers (e.g., GPUs)."
     )
-    @PluginProperty
+    @PluginProperty(group = "advanced")
     protected List<DeviceRequest> deviceRequests;
 
     @Schema(
         title = "CPU limits",
         description = "Set CPU quota/shares; otherwise the container can use all host CPU."
     )
-    @PluginProperty
+    @PluginProperty(group = "execution")
     protected Cpu cpu;
 
     @Schema(
         title = "Memory limits",
         description = "Hard/soft memory limits; default is unlimited memory."
     )
-    @PluginProperty
+    @PluginProperty(group = "execution")
     protected Memory memory;
 
     @Schema(
         title = "Shared memory size",
         description = "Bytes for /dev/shm; defaults to 64MB when not set."
     )
+    @PluginProperty(group = "advanced")
     private Property<String> shmSize;
 
     @Schema(
         title = "Privileged container",
         description = "If true, runs the container with `--privileged`; use cautiously."
     )
+    @PluginProperty(group = "advanced")
     private Property<Boolean> privileged;
 
     @Schema(
         title = "Environment variables",
         description = "Key/value map rendered before launching the container."
     )
+    @PluginProperty(group = "execution")
     private Property<Map<String, String>> env;
 
     @Schema(
@@ -224,12 +233,16 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
         description = "Deprecated and ignored; will be removed in a future version."
     )
     @Deprecated
+    @PluginProperty(group = "deprecated")
     private Property<Boolean> warningOnStdErr;
 
+    @PluginProperty(group = "source")
     private NamespaceFiles namespaceFiles;
 
+    @PluginProperty(group = "source")
     private Object inputFiles;
 
+    @PluginProperty(group = "destination")
     private Property<List<String>> outputFiles;
 
     @Schema(
@@ -237,6 +250,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
         description = "Command/args executed inside the container; empty uses the image CMD."
     )
     @Builder.Default
+    @PluginProperty(group = "main")
     private Property<List<String>> commands = Property.ofValue(new ArrayList<>());
 
     @Builder.Default
@@ -244,6 +258,7 @@ public class Run extends AbstractDocker implements RunnableTask<ScriptOutput>, N
         title = "Wait for container exit",
         description = "Defaults to true; set false to start and return immediately."
     )
+    @PluginProperty(group = "execution")
     private final Property<Boolean> wait = Property.ofValue(true);
 
     @Override

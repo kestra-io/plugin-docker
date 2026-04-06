@@ -25,6 +25,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -156,12 +157,14 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
         title = "Dockerfile content or path",
         description = "Inline Dockerfile text, a relative path in the working directory, or a Kestra URI; inline content is stored as a temp file before build."
     )
+    @PluginProperty(group = "source")
     private Property<String> dockerfile;
 
     @Schema(
         title = "Target platforms for the image",
         description = "Each entry is passed to buildx as `--platform`; leave empty to use the daemon default."
     )
+    @PluginProperty(group = "advanced")
     private Property<List<String>> platforms;
 
     @Schema(
@@ -169,6 +172,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
         description = "Defaults to false; when true, tags are pushed using the provided credentials."
     )
     @Builder.Default
+    @PluginProperty(group = "advanced")
     private Property<Boolean> push = Property.ofValue(false);
 
     @Schema(
@@ -176,6 +180,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
         description = "Defaults to true so the build uses the latest base image; set false to rely on cached layers."
     )
     @Builder.Default
+    @PluginProperty(group = "advanced")
     private Property<Boolean> pull = Property.ofValue(true);
 
     @Schema(
@@ -183,22 +188,27 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
         description = "Include the registry host for custom registries. For insecure HTTP registries, configure `/etc/docker/daemon.json` as shown in the linked [gist](https://gist.github.com/brian-mulier-p/0c5a0ae85e83a179d6e93b22cb471934) and restart Docker (`systemctl daemon-reload && systemctl restart docker`)."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<List<String>> tags;
 
     @Schema(
         title = "Build arguments",
         description = "Optional key/value map rendered before invoking the build."
     )
+    @PluginProperty(group = "advanced")
     protected Property<Map<String, String>> buildArgs;
 
     @Schema(
         title = "Image labels",
         description = "Key/value labels to apply to the built image."
     )
+    @PluginProperty(group = "advanced")
     protected Property<Map<String, String>> labels;
 
+    @PluginProperty(group = "source")
     private NamespaceFiles namespaceFiles;
 
+    @PluginProperty(group = "source")
     private Object inputFiles;
 
     @Override

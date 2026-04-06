@@ -16,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -80,6 +81,7 @@ public class Push extends AbstractDocker implements RunnableTask<VoidOutput> {
         description = "Provide one or more tags; use fully qualified references for custom registries."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<List<String>> tags;
 
     @Override

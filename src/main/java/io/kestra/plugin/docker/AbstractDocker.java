@@ -61,6 +61,7 @@ public abstract class AbstractDocker extends Task {
     @Schema(
         title = "The URI of your Docker host e.g. localhost"
     )
+    @PluginProperty(group = "connection")
     protected Property<String> host;
 
     @Schema(
@@ -68,12 +69,12 @@ public abstract class AbstractDocker extends Task {
         description = "Docker configuration file that can set access credentials to private container registries. Usually located in `~/.docker/config.json`.",
         anyOf = { String.class, Map.class }
     )
-    @PluginProperty(dynamic = true)
+    @PluginProperty(dynamic = true, group = "advanced")
     protected Object config;
 
     @Schema(
         title = "Credentials for a private container registry."
     )
-    @PluginProperty(dynamic = true)
+    @PluginProperty(dynamic = true, group = "connection")
     protected Credentials credentials;
 }

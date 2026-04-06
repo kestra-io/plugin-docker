@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import io.kestra.core.models.annotations.PluginProperty;
 
 @SuperBuilder
 @ToString
@@ -49,6 +50,7 @@ public class Tag extends AbstractDocker implements RunnableTask<VoidOutput> {
         description = "Existing image name or ID to retag."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> sourceImage;
 
     @Schema(
@@ -56,6 +58,7 @@ public class Tag extends AbstractDocker implements RunnableTask<VoidOutput> {
         description = "Repository and tag to create; defaults to `latest` if no tag is provided."
     )
     @NotNull
+    @PluginProperty(group = "main")
     private Property<String> targetImage;
 
     @Override
