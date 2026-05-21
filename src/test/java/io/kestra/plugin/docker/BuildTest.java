@@ -49,6 +49,28 @@ class BuildTest {
     }
 
     @Test
+    void target() throws Exception {
+        Build task = Build.builder()
+            .id("unit-test")
+            .type(Build.class.getName())
+            .tags(Property.ofValue(List.of("unit-test-target")))
+            .target(Property.ofValue("base"))
+            .dockerfile(Property.ofValue("""
+                    FROM ubuntu AS base
+                    RUN echo "base stage"
+
+                    FROM base AS final
+                    RUN exit 1
+                """))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());
+
+        Build.Output run = task.run(runContext);
+        assertThat(run.getImageId(), notNullValue());
+    }
+
+    @Test
     void local() throws Exception {
         RunContext runContext = runContextFactory.of();
 
