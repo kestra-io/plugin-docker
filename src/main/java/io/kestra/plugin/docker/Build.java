@@ -205,6 +205,13 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
     @PluginProperty(group = "advanced")
     protected Property<Map<String, String>> labels;
 
+    @Schema(
+        title = "Target build stage",
+        description = "Name of the build stage to stop at in a multi-stage Dockerfile; equivalent to `--target`."
+    )
+    @PluginProperty(group = "advanced")
+    private Property<String> target;
+
     @PluginProperty(group = "source")
     private NamespaceFiles namespaceFiles;
 
@@ -274,6 +281,8 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
             if (!renderedLabel.isEmpty()) {
                 buildImageCmd.withLabels(renderedLabel);
             }
+
+            runContext.render(this.target).as(String.class).ifPresent(buildImageCmd::withTarget);
 
             String imageId = buildImageCmd
                 .exec(new BuildImageResultCallback(runContext))
