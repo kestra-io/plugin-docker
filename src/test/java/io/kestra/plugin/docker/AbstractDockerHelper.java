@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.model.Config;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
@@ -88,6 +89,20 @@ public class AbstractDockerHelper {
 
     DockerClient getDockerClient(RunContext runContext, String image, Credentials credentials, Config config) throws IllegalVariableEvaluationException, IOException {
         return DockerService.client(runContext, null, config, credentials, image);
+    }
+
+    String runNamedContainer(RunContext runContext, String image, String name) throws IllegalVariableEvaluationException, IOException {
+        try (DockerClient client = getDockerClient(runContext, image, null, null)) {
+            client.pullImageCmd(image).start().awaitCompletion();
+            CreateContainerResponse created = client.createContainerCmd(image)
+                .withName(name)
+                .exec();
+            client.startContainerCmd(created.getId()).exec();
+            return created.getId();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IOException("Interrupted while pulling image " + image, e);
+        }
     }
 
     String runContainer(RunContextFactory runContextFactory, String image) throws Exception {

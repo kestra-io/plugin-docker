@@ -26,7 +26,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 @Plugin(
     examples = {
         @Example(
-            title = "Kill a Docker container",
+            title = "Kill a Docker container by ID",
             full = true,
             code = """
                 id: docker_stop
@@ -38,13 +38,26 @@ import io.kestra.core.models.annotations.PluginProperty;
                     containerId: 8088357a1974
                     kill: true
                 """
+        ),
+        @Example(
+            title = "Stop a Docker container by name",
+            full = true,
+            code = """
+                id: docker_stop_by_name
+                namespace: company.team
+
+                tasks:
+                  - id: stop
+                    type: io.kestra.plugin.docker.Stop
+                    containerId: my-app
+                """
         )
     }
 )
 public class Stop extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "Container ID",
-        description = "ID of the container to stop or kill."
+        title = "Container ID or name",
+        description = "ID, ID prefix, or name of the container to stop or kill. For example: `8088357a1974`, `8088`, or `my-app`."
     )
     @PluginProperty(group = "connection")
     private Property<String> containerId;

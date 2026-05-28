@@ -60,4 +60,30 @@ class RmTest extends AbstractDockerHelper {
         removeImages.run(runContext);
         assertThat(imageExists(runContextFactory.of(), image), is(false));
     }
+
+    @Test
+    void removeContainersByName() throws Exception {
+        final String image = "redis:6.2.17-alpine";
+        final String name1 = "kestra-rm-by-name-1-" + System.currentTimeMillis();
+        final String name2 = "kestra-rm-by-name-2-" + System.currentTimeMillis();
+
+        String containerId1 = runNamedContainer(runContextFactory.of(), image, name1);
+        String containerId2 = runNamedContainer(runContextFactory.of(), image, name2);
+
+        assertThat(containerExists(containerId1, runContextFactory.of()), is(true));
+        assertThat(containerExists(containerId2, runContextFactory.of()), is(true));
+
+        Rm removeContainers = Rm.builder()
+            .id(Rm.class.getSimpleName())
+            .type(Rm.class.getName())
+            .containerIds(Property.ofValue(List.of(name1, name2)))
+            .force(Property.ofValue(true))
+            .build();
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, removeContainers, ImmutableMap.of());
+
+        removeContainers.run(runContext);
+
+        assertThat(containerExists(containerId1, runContextFactory.of()), is(false));
+        assertThat(containerExists(containerId2, runContextFactory.of()), is(false));
+    }
 }
