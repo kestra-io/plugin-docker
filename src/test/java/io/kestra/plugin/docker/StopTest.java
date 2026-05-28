@@ -19,9 +19,49 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
-class StopTest {
+class StopTest extends AbstractDockerHelper {
     @Inject
     RunContextFactory runContextFactory;
+
+    @Test
+    void stopByContainerIdPrefix() throws Exception {
+        final String image = "redis:6.2.17-alpine";
+        String containerId = runContainer(runContextFactory, image);
+        assertThat(containerExists(containerId, runContextFactory.of()), is(true));
+
+        String prefix = containerId.substring(0, 12);
+
+        Stop stop = Stop.builder()
+            .id("stop")
+            .type(Stop.class.getName())
+            .containerId(Property.ofValue(prefix))
+            .build();
+        RunContext stopRunContext = TestsUtils.mockRunContext(runContextFactory, stop, ImmutableMap.of());
+
+        stop.run(stopRunContext);
+
+        assertThat(containerExists(containerId, runContextFactory.of()), is(false));
+    }
+
+    @Test
+    void stopByContainerName() throws Exception {
+        final String image = "redis:6.2.17-alpine";
+        final String name = "kestra-stop-by-name-" + System.currentTimeMillis();
+
+        String containerId = runNamedContainer(runContextFactory.of(), image, name);
+        assertThat(containerExists(containerId, runContextFactory.of()), is(true));
+
+        Stop stop = Stop.builder()
+            .id("stop")
+            .type(Stop.class.getName())
+            .containerId(Property.ofValue(name))
+            .build();
+        RunContext stopRunContext = TestsUtils.mockRunContext(runContextFactory, stop, ImmutableMap.of());
+
+        stop.run(stopRunContext);
+
+        assertThat(containerExists(containerId, runContextFactory.of()), is(false));
+    }
 
     @Test
     void runAndStop() throws Exception {

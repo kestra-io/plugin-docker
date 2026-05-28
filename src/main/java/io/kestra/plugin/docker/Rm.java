@@ -27,7 +27,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 @Plugin(
     examples = {
         @Example(
-            title = "Remove multiple docker containers",
+            title = "Remove multiple docker containers by ID",
             full = true,
             code = """
                 id: docker_remove_containers
@@ -41,20 +41,36 @@ import io.kestra.core.models.annotations.PluginProperty;
                         - 947795c71c71
                         - 5ad36bff753e
                 """
+        ),
+        @Example(
+            title = "Remove docker containers by name",
+            full = true,
+            code = """
+                id: docker_remove_containers_by_name
+                namespace: company.team
+
+                tasks:
+                  - id: remove_containers
+                    type: io.kestra.plugin.docker.Rm
+                    force: true
+                    containerIds:
+                        - my-app
+                        - my-worker
+                """
         )
     }
 )
 public class Rm extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
-        title = "Container IDs",
-        description = "List of container IDs to remove."
+        title = "Container IDs or names",
+        description = "List of container IDs, ID prefixes, or names to remove. For example: `8088357a1974`, `8088`, or `my-app`."
     )
     @PluginProperty(group = "connection")
     protected Property<List<String>> containerIds;
 
     @Schema(
-        title = "Image IDs",
-        description = "List of image IDs to remove."
+        title = "Image IDs or references",
+        description = "List of image IDs or references (e.g. `redis:7-alpine`, `myregistry/foo:v1`) to remove."
     )
     @PluginProperty(group = "advanced")
     protected Property<List<String>> imageIds;
