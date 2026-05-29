@@ -18,6 +18,7 @@
 Single-module plugin. Source packages under `io.kestra.plugin`:
 
 - `docker`
+- `docker.model`
 
 ### Key Plugin Classes
 
@@ -31,13 +32,19 @@ Single-module plugin. Source packages under `io.kestra.plugin`:
 - `io.kestra.plugin.docker.Run`
 - `io.kestra.plugin.docker.Stop`
 - `io.kestra.plugin.docker.Tag`
+- `io.kestra.plugin.docker.model.Pull` — pull a model via DMR REST API
+- `io.kestra.plugin.docker.model.List` — list locally available models via DMR REST API
+- `io.kestra.plugin.docker.model.Delete` — delete a model via DMR REST API
+- `io.kestra.plugin.docker.model.Configure` — configure runtime parameters of a model via DMR REST API
 
 ### Project Structure
 
 ```
 plugin-docker/
 ├── src/main/java/io/kestra/plugin/docker/
+├── src/main/java/io/kestra/plugin/docker/model/
 ├── src/test/java/io/kestra/plugin/docker/
+├── src/test/java/io/kestra/plugin/docker/model/
 ├── build.gradle
 └── README.md
 ```
