@@ -4,6 +4,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -69,7 +70,7 @@ public class Pull extends AbstractModel implements RunnableTask<VoidOutput> {
         var rHost = resolvedHost(runContext);
         var logger = runContext.logger();
 
-        var body = MAPPER.writeValueAsString(java.util.Map.of("fromImage", rModel));
+        var body = MAPPER.writeValueAsString(Map.of("fromImage", rModel));
         var request = HttpRequest.newBuilder()
             .uri(URI.create(rHost + "/models/create"))
             .header("Content-Type", "application/json")
@@ -78,7 +79,7 @@ public class Pull extends AbstractModel implements RunnableTask<VoidOutput> {
 
         try (var client = HttpClient.newHttpClient()) {
             var response = client.send(request, HttpResponse.BodyHandlers.ofLines());
-            if (response.statusCode() / 100 != 2) {
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw new RuntimeException("DMR /models/create returned HTTP " + response.statusCode());
             }
             response.body().forEach(line -> {

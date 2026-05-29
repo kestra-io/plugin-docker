@@ -29,7 +29,7 @@ public abstract class AbstractModel extends Task {
     protected Property<String> host = Property.ofValue("http://localhost:12434");
 
     protected String resolvedHost(RunContext runContext) throws IllegalVariableEvaluationException {
-        var h = runContext.render(this.host).as(String.class).orElse("http://localhost:12434");
-        return h.endsWith("/") ? h.substring(0, h.length() - 1) : h;
+        var rHost = runContext.render(this.host).as(String.class).orElse("http://localhost:12434");
+        return rHost.endsWith("/") ? rHost.substring(0, rHost.length() - 1) : rHost;
     }
 }
