@@ -32,5 +32,7 @@ class ListIT {
         var output = task.run(runContext);
 
         assertThat(output.getModels(), notNullValue());
+        assertThat(output.getModels(), hasSize(greaterThanOrEqualTo(0)));
+        output.getModels().forEach(m -> assertThat(m.id(), notNullValue()));
     }
 }

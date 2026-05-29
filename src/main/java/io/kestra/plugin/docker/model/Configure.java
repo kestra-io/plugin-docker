@@ -5,6 +5,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -81,7 +82,7 @@ public class Configure extends AbstractModel implements RunnableTask<VoidOutput>
         description = "Raw llama.cpp inference flags, e.g. `--temp 0.7`. Applied verbatim to the model runtime."
     )
     @PluginProperty(group = "advanced")
-    private Property<java.util.List<String>> runtimeFlags;
+    private Property<List<String>> runtimeFlags;
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
@@ -115,7 +116,7 @@ public class Configure extends AbstractModel implements RunnableTask<VoidOutput>
 
         try (var client = HttpClient.newHttpClient()) {
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() / 100 != 2) {
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw new RuntimeException("DMR POST " + url + " returned HTTP " + response.statusCode());
             }
         }

@@ -74,7 +74,7 @@ public class Delete extends AbstractModel implements RunnableTask<VoidOutput> {
 
         try (var client = HttpClient.newHttpClient()) {
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() / 100 != 2) {
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 throw new RuntimeException("DMR DELETE " + url + " returned HTTP " + response.statusCode());
             }
         }
