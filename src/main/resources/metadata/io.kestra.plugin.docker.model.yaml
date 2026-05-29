@@ -1,0 +1,8 @@
+group: io.kestra.plugin.docker.model
+name: "model"
+title: "Docker Model Runner"
+description: "Tasks for managing AI models via the Docker Model Runner (DMR) REST API."
+body: "Calls the native DMR REST API at http://localhost:12434 (configurable via the host property). Does not require a Docker daemon or the docker model CLI. Covers pulling, listing, deleting, and configuring models."
+videos: []
+createdBy: "Kestra Core Team"
+managedBy: "Kestra Core Team"
