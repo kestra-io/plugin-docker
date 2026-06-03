@@ -55,20 +55,16 @@ class ImageLsTest extends AbstractDockerHelper {
     }
 
     @Test
-    void listImages_imageNameFilter_reducesResults() throws Exception {
-        var pull = Pull.builder()
-            .id("pull")
-            .type(Pull.class.getName())
-            .image(Property.ofValue(TEST_IMAGE))
-            .build();
-        var pullContext = TestsUtils.mockRunContext(runContextFactory, pull, ImmutableMap.of());
-        pull.run(pullContext);
-
-        var unfiltered = ImageLs.builder()
-            .id("image-ls-all")
-            .type(ImageLs.class.getName())
-            .build();
-        var unfilteredOutput = unfiltered.run(TestsUtils.mockRunContext(runContextFactory, unfiltered, ImmutableMap.of()));
+    void listImages_imageNameFilter_returnsOnlyMatchingImages() throws Exception {
+        // Pull two distinct images so the daemon has more than alpine.
+        for (var img : new String[]{TEST_IMAGE, "busybox:latest"}) {
+            var pull = Pull.builder()
+                .id("pull-" + img.replace(":", "-"))
+                .type(Pull.class.getName())
+                .image(Property.ofValue(img))
+                .build();
+            pull.run(TestsUtils.mockRunContext(runContextFactory, pull, ImmutableMap.of()));
+        }
 
         var filtered = ImageLs.builder()
             .id("image-ls-filter")
@@ -78,12 +74,18 @@ class ImageLsTest extends AbstractDockerHelper {
         var filteredOutput = filtered.run(TestsUtils.mockRunContext(runContextFactory, filtered, ImmutableMap.of()));
 
         assertThat(filteredOutput.getImages(), not(empty()));
-        assertThat(filteredOutput.getCount(), lessThanOrEqualTo(unfilteredOutput.getCount()));
 
-        // At least one returned image must reference "alpine".
-        var hasAlpine = filteredOutput.getImages().stream()
-            .anyMatch(image -> image.getRepoTags().stream().anyMatch(t -> t.contains("alpine")));
-        assertThat(hasAlpine, is(true));
+        // Every returned image must reference "alpine"; busybox must be absent.
+        filteredOutput.getImages().forEach(image ->
+            assertThat(
+                "image " + image.getRepoTags() + " should match alpine",
+                image.getRepoTags().stream().anyMatch(t -> t.contains("alpine")),
+                is(true)
+            )
+        );
+        var hasBusybox = filteredOutput.getImages().stream()
+            .anyMatch(image -> image.getRepoTags().stream().anyMatch(t -> t.contains("busybox")));
+        assertThat("busybox must not appear when filtering for alpine", hasBusybox, is(false));
     }
 
     @Test

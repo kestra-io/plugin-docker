@@ -79,7 +79,7 @@ import lombok.experimental.SuperBuilder;
 
                   - id: check
                     type: io.kestra.plugin.core.flow.If
-                    condition: "{{ outputs.before.images | first | dig('id', '') != outputs.after.images | first | dig('id', '') }}"
+                    condition: "{{ (outputs.before.images[0].id) != (outputs.after.images[0].id) }}"
                     then:
                       - id: updated
                         type: io.kestra.plugin.core.log.Log
@@ -129,7 +129,9 @@ public class ImageLs extends AbstractDocker implements RunnableTask<ImageLs.Outp
             ListImagesCmd cmd = client.listImagesCmd().withShowAll(rShowAll);
 
             if (rImageNameFilter != null) {
-                cmd.withImageNameFilter(rImageNameFilter);
+                // withReferenceFilter sets filters={"reference":[...]} (Docker API >= 1.25).
+                // The legacy withImageNameFilter uses the ?filter= param ignored since API 1.41.
+                cmd.withReferenceFilter(rImageNameFilter);
             }
 
             if (!rLabelFilter.isEmpty()) {
