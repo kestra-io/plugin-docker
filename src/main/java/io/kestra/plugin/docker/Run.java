@@ -54,7 +54,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 tasks:
                   - id: write
                     type: io.kestra.plugin.core.storage.Write
-                       content: |
+                    content: |
                          extensions:
                            health_check: {}
 
@@ -74,7 +74,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                              logs:
                                receivers: [otlp]
                                exporters: [debug]
-                       extension: .yaml
+                    extension: .yaml
 
                   - id: run
                     type: io.kestra.plugin.docker.Run
