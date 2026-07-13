@@ -23,6 +23,7 @@ Single-module plugin. Source packages under `io.kestra.plugin`:
 
 - `io.kestra.plugin.docker.Build`
 - `io.kestra.plugin.docker.Compose`
+- `io.kestra.plugin.docker.ImageLs`
 - `io.kestra.plugin.docker.Prune`
 - `io.kestra.plugin.docker.Pull`
 - `io.kestra.plugin.docker.Push`

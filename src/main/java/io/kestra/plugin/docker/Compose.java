@@ -84,7 +84,7 @@ import lombok.experimental.SuperBuilder;
     }
 )
 public class Compose extends AbstractExecScript implements RunnableTask<ScriptOutput> {
-    private static final String DEFAULT_IMAGE = "docker:latest";
+    private static final String DEFAULT_IMAGE = "docker:27.5.1-cli";
 
     @Schema(
         title = "Compose file",
