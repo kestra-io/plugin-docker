@@ -24,7 +24,7 @@ repositories {
     }
 }
 
-final targetJavaVersion = JavaVersion.VERSION_21
+final targetJavaVersion = JavaVersion.VERSION_25
 
 java {
     sourceCompatibility = targetJavaVersion
@@ -103,6 +103,7 @@ dependencies {
     testImplementation group: "io.kestra", name: "repository-memory", version: kestraVersion
     testImplementation group: "io.kestra", name: "runner-memory", version: kestraVersion
     testImplementation group: "io.kestra", name: "storage-local", version: kestraVersion
+    testImplementation group: "io.kestra", name: "indexer", version: kestraVersion
 
     // test
     testImplementation "org.junit.jupiter:junit-jupiter-engine"
@@ -114,29 +115,6 @@ dependencies {
         exclude group: 'com.github.docker-java', module: 'docker-java-transport-netty'
         exclude group: 'com.github.docker-java', module: 'docker-java-transport-jersey'
     }
-}
-
-/**********************************************************************************************************************\
- * Allure Reports
- **********************************************************************************************************************/
-dependencies {
-    testImplementation enforcedPlatform("io.kestra:platform:$kestraVersion")
-    testImplementation "io.qameta.allure:allure-junit5"
-}
-
-configurations {
-    agent {
-        canBeResolved = true
-        canBeConsumed = true
-    }
-}
-
-dependencies {
-    agent "org.aspectj:aspectjweaver:1.9.25.1"
-}
-
-test {
-    jvmArgs = [ "-javaagent:${configurations.agent.singleFile}" ]
 }
 
 /**********************************************************************************************************************\

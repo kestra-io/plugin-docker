@@ -1,0 +1,17 @@
+id: docker_run_commands_array
+namespace: company.team
+
+inputs:
+  - id: image
+    type: STRING
+    defaults: alpine:latest
+  - id: commands
+    type: ARRAY
+    itemType: STRING
+    required: false
+
+tasks:
+  - id: run
+    type: io.kestra.plugin.docker.Run
+    containerImage: "{{ inputs.image }}"
+    commands: "{{ inputs.commands | default([]) }}"
