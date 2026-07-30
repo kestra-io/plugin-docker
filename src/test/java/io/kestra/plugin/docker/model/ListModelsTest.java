@@ -1,6 +1,7 @@
 package io.kestra.plugin.docker.model;
 
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
@@ -111,5 +112,33 @@ class ListModelsTest {
         var ex = assertThrows(IllegalStateException.class, () -> task(port).run(runContext));
 
         assertThat(ex.getMessage(), containsString("Failed to parse"));
+    }
+
+    // A peer that accepts the TCP connection then closes it without writing a byte makes Apache HttpClient5
+    // raise NoHttpResponseException, which io.kestra.core.http.client.HttpClient (as of 1.3.13) rethrows as a
+    // bare `RuntimeException`, not an HttpClientException. This reproduces that transport failure deterministically,
+    // without relying on a timeout, to prove AbstractModel#execute still wraps it into an actionable error.
+    @Test
+    void transportFailure_throwsActionableError() throws Exception {
+        try (var serverSocket = new ServerSocket(0)) {
+            var acceptThread = new Thread(() -> {
+                try {
+                    while (!serverSocket.isClosed()) {
+                        serverSocket.accept().close();
+                    }
+                } catch (java.io.IOException ignored) {
+                    // server socket closed, stop accepting
+                }
+            });
+            acceptThread.setDaemon(true);
+            acceptThread.start();
+
+            var task = task(serverSocket.getLocalPort());
+            var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+            var ex = assertThrows(IllegalStateException.class, () -> task.run(runContext));
+
+            assertThat(ex.getMessage(), containsString("Failed to list models on Docker Model Runner"));
+            assertThat(ex.getCause(), notNullValue());
+        }
     }
 }

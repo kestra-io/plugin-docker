@@ -70,6 +70,8 @@ public abstract class AbstractModel extends Task {
             return client.request(request, responseType).getBody();
         } catch (HttpClientException e) {
             throw failure(action, e);
+        } catch (RuntimeException e) {
+            throw rethrowAsFailureIfTransport(action, e);
         }
     }
 
@@ -84,7 +86,26 @@ public abstract class AbstractModel extends Task {
             throw failure(action, e);
         } catch (UncheckedIOException e) {
             throw failure(action, e.getCause());
+        } catch (RuntimeException e) {
+            throw rethrowAsFailureIfTransport(action, e);
         }
+    }
+
+    /**
+     * io.kestra.core.http.client.HttpClient (verified against core 1.3.13) only re-wraps an
+     * IOException into HttpClientException when it's a SocketException or an SSLHandshakeException,
+     * or when its cause is already an HttpClientException. Any other IOException surfacing from the
+     * transport — e.g. a SocketTimeoutException on a stalled read, or NoHttpResponseException on a
+     * connection closed before any response — is rethrown as a bare `new RuntimeException(cause)`.
+     * That exact shape (plain RuntimeException wrapping an IOException) is the only one re-wrapped
+     * here, so genuine programming errors from our own code (NPE, IllegalArgumentException, ...)
+     * are left untouched.
+     */
+    private static RuntimeException rethrowAsFailureIfTransport(String action, RuntimeException e) {
+        if (e.getClass() == RuntimeException.class && e.getCause() instanceof IOException cause) {
+            return failure(action, cause);
+        }
+        return e;
     }
 
     private static void readLines(InputStream inputStream, Consumer<String> lineConsumer) {

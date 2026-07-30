@@ -3,6 +3,7 @@ package io.kestra.plugin.docker.model;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
@@ -114,5 +115,33 @@ class PullTest {
         var ex = assertThrows(Exception.class, () -> pullTask.run(runContext));
 
         assertThat(ex.getMessage(), containsString("Invalid model reference"));
+    }
+
+    // Same transport failure as ListModelsTest#transportFailure_throwsActionableError, exercised through
+    // AbstractModel#executeStreaming this time: a peer closing the connection before any response bytes
+    // makes Apache HttpClient5 raise NoHttpResponseException, which core's HttpClient rethrows as a bare
+    // RuntimeException rather than an HttpClientException.
+    @Test
+    void transportFailure_throwsActionableError() throws Exception {
+        try (var serverSocket = new ServerSocket(0)) {
+            var acceptThread = new Thread(() -> {
+                try {
+                    while (!serverSocket.isClosed()) {
+                        serverSocket.accept().close();
+                    }
+                } catch (java.io.IOException ignored) {
+                    // server socket closed, stop accepting
+                }
+            });
+            acceptThread.setDaemon(true);
+            acceptThread.start();
+
+            var pullTask = task(serverSocket.getLocalPort(), "ai/smollm2");
+            var runContext = TestsUtils.mockRunContext(runContextFactory, pullTask, Map.of());
+            var ex = assertThrows(IllegalStateException.class, () -> pullTask.run(runContext));
+
+            assertThat(ex.getMessage(), containsString("Failed to pull model 'ai/smollm2' on Docker Model Runner"));
+            assertThat(ex.getCause(), notNullValue());
+        }
     }
 }

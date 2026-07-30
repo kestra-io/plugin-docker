@@ -48,6 +48,10 @@ plugin-docker/
 └── README.md
 ```
 
+### Testing
+
+`io.kestra.plugin.docker.model.DeleteIT`, `PullIT`, and `ListModelsIT` are integration tests that run against a **live** Docker Model Runner and are gated behind `@DockerModelRunnerTest`, which requires both `DMR_IT_TESTS=true` and a reachable DMR at `localhost:12434`. They are skipped by default (including in CI) and are **destructive**: `PullIT` and `DeleteIT` pull and delete the real `ai/smollm2` tag on whatever DMR instance is reachable — DMR tags are not test-namespaced, so a developer running with the opt-in set and an existing `ai/smollm2` model of their own will lose it. Only set `DMR_IT_TESTS=true` against a DMR instance you don't mind losing that model on.
+
 ## References
 
 - https://kestra.io/docs/plugin-developer-guide
