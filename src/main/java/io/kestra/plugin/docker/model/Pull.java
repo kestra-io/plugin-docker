@@ -1,13 +1,12 @@
 package io.kestra.plugin.docker.model;
 
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.Map;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.kestra.core.http.HttpRequest;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -31,7 +30,8 @@ import lombok.experimental.SuperBuilder;
     title = "Pull a model via Docker Model Runner",
     description = """
         Pulls a model from a registry using the Docker Model Runner (DMR) REST API.
-        The model is streamed line by line; each status line is logged as info.
+        The model is streamed line by line; each status line is logged at debug level,
+        and a summary is logged at info level once the pull completes.
         Throws if any line contains an error field or if the server returns a non-2xx response.
         """
 )
@@ -66,36 +66,37 @@ public class Pull extends AbstractModel implements RunnableTask<VoidOutput> {
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        var rModel = runContext.render(this.model).as(String.class).orElseThrow();
+        var rModel = runContext.render(this.model).as(String.class)
+            .orElseThrow(() -> new IllegalArgumentException("The `model` property is required, e.g. `ai/smollm2`."));
         var rHost = resolvedHost(runContext);
         var logger = runContext.logger();
 
-        var body = MAPPER.writeValueAsString(Map.of("fromImage", rModel));
-        var request = HttpRequest.newBuilder()
+        var request = HttpRequest.builder()
             .uri(URI.create(rHost + "/models/create"))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(body))
+            .method("POST")
+            .body(HttpRequest.JsonRequestBody.of(Map.of("from", rModel)))
             .build();
 
-        try (var client = HttpClient.newHttpClient()) {
-            var response = client.send(request, HttpResponse.BodyHandlers.ofLines());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new RuntimeException("DMR /models/create returned HTTP " + response.statusCode());
+        this.executeStreaming(runContext, request, line -> {
+            if (line.isBlank()) {
+                return;
             }
-            response.body().forEach(line -> {
-                logger.info("{}", line);
-                try {
-                    var node = MAPPER.readTree(line);
-                    if (node.has("error")) {
-                        throw new RuntimeException("Error pulling model " + rModel + ": " + node.get("error").asText());
-                    }
-                } catch (RuntimeException e) {
-                    throw e;
-                } catch (Exception e) {
-                    // Non-JSON lines are treated as plain status output
+
+            try {
+                var node = MAPPER.readTree(line);
+                if (node.has("error")) {
+                    throw new IllegalStateException(
+                        "Docker Model Runner reported an error while pulling model '" + rModel + "': " + node.get("error").asText()
+                    );
                 }
-            });
-        }
+                logger.debug("{}", line);
+            } catch (JsonProcessingException e) {
+                // Non-JSON lines are treated as plain status output.
+                logger.debug("{}", line);
+            }
+        }, "pull model '" + rModel + "'");
+
+        logger.info("Pulled model {}", rModel);
         return null;
     }
 }

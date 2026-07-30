@@ -33,9 +33,9 @@ Single-module plugin. Source packages under `io.kestra.plugin`:
 - `io.kestra.plugin.docker.Stop`
 - `io.kestra.plugin.docker.Tag`
 - `io.kestra.plugin.docker.model.Pull` — pull a model via DMR REST API
-- `io.kestra.plugin.docker.model.List` — list locally available models via DMR REST API
+- `io.kestra.plugin.docker.model.ListModels` — list locally available models via DMR REST API
 - `io.kestra.plugin.docker.model.Delete` — delete a model via DMR REST API
-- `io.kestra.plugin.docker.model.Configure` — configure runtime parameters of a model via DMR REST API
+- `io.kestra.plugin.docker.model.Configure` — targets a model-configuration DMR endpoint that does not exist on current DMR releases (confirmed to return HTTP 404); do not treat as functional until a working endpoint is found
 
 ### Project Structure
 

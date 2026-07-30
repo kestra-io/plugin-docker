@@ -8,6 +8,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.time.Duration;
 
 import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -25,6 +26,7 @@ public @interface DockerModelRunnerTest {
     class Condition implements BeforeEachCallback {
 
         private static final String DMR_URL = "http://localhost:12434/models";
+        private static final Duration PROBE_TIMEOUT = Duration.ofSeconds(3);
         private static volatile Boolean available = null;
 
         @Override
@@ -36,9 +38,10 @@ public @interface DockerModelRunnerTest {
         }
 
         private static boolean probe() {
-            try (var client = HttpClient.newHttpClient()) {
+            try (var client = HttpClient.newBuilder().connectTimeout(PROBE_TIMEOUT).build()) {
                 var request = HttpRequest.newBuilder()
                     .uri(URI.create(DMR_URL))
+                    .timeout(PROBE_TIMEOUT)
                     .GET()
                     .build();
                 var response = client.send(request, HttpResponse.BodyHandlers.discarding());
