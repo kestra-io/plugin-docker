@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import java.util.*;
 
@@ -30,6 +30,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
     description = "Starts a container using the Docker task runner or host daemon, with optional waits, resource limits, port/volume bindings, and registry credentials. Waits for exit by default; volume mounts are disabled unless enabled in `kestra.tasks.scripts.docker.volume-enabled`."
 )
 @Plugin(
+    aliases = "io.kestra.plugin.docker.Run",
     examples = {
         @Example(
             title = "Run the alpine container with no command",
@@ -40,7 +41,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
                 tasks:
                   - id: run
-                    type: io.kestra.plugin.docker.Run
+                    type: io.kestra.plugin.docker.cli.Run
                     containerImage: alpine:latest
                 """
         ),
@@ -77,7 +78,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                     extension: .yaml
 
                   - id: run
-                    type: io.kestra.plugin.docker.Run
+                    type: io.kestra.plugin.docker.cli.Run
                     containerImage: otel/opentelemetry-collector:latest
                     inputFiles:
                       otel.yaml: "{{ outputs.write.uri }}"
@@ -103,7 +104,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
                 tasks:
                   - id: docker_run_output_file
-                    type: io.kestra.plugin.docker.Run
+                    type: io.kestra.plugin.docker.cli.Run
                     containerImage: ubuntu:22.04
                     commands:
                       - "/bin/sh"

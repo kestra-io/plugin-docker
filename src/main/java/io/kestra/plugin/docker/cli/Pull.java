@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import java.util.Optional;
 
@@ -30,6 +30,7 @@ import io.kestra.core.models.annotations.PluginProperty;
     description = "Pulls an image/tag using the configured Docker daemon. If registry credentials specify a registry host, it is prepended to the image name."
 )
 @Plugin(
+    aliases = "io.kestra.plugin.docker.Pull",
     examples = {
         @Example(
             title = "Pull a Docker image",
@@ -40,7 +41,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: pull_alpine
-                    type: io.kestra.plugin.docker.Pull
+                    type: io.kestra.plugin.docker.cli.Pull
                     image: alpine:latest
                 """
         )

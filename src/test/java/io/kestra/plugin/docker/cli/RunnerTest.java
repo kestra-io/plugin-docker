@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import org.junit.jupiter.api.Test;
 
@@ -12,12 +12,11 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest(startRunner = true)
-class SanityChecks {
-
+class RunnerTest {
     @Test
-    @ExecuteFlow("sanity-checks/docker_run_output_file.yml")
-    void runWithOutputFile(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(3));
+    @ExecuteFlow("flows/docker_compose.yaml")
+    void flow(Execution execution) {
+        assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 }

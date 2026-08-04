@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -57,6 +57,7 @@ import lombok.experimental.SuperBuilder;
         """
 )
 @Plugin(
+    aliases = "io.kestra.plugin.docker.Compose",
     examples = {
         @Example(
             title = "Run `docker compose up -d` using an inline compose file",
@@ -67,7 +68,7 @@ import lombok.experimental.SuperBuilder;
 
                 tasks:
                   - id: up
-                    type: io.kestra.plugin.docker.Compose
+                    type: io.kestra.plugin.docker.cli.Compose
                     taskRunner:
                       type: io.kestra.plugin.scripts.runner.docker.Docker
                       volumes:

@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +31,7 @@ import lombok.experimental.SuperBuilder;
         """
 )
 @Plugin(
+    aliases = "io.kestra.plugin.docker.ImageLs",
     examples = {
         @Example(
             title = "List all Docker images on the host",
@@ -41,7 +42,7 @@ import lombok.experimental.SuperBuilder;
 
                 tasks:
                   - id: list_images
-                    type: io.kestra.plugin.docker.ImageLs
+                    type: io.kestra.plugin.docker.cli.ImageLs
                 """
         ),
         @Example(
@@ -53,7 +54,7 @@ import lombok.experimental.SuperBuilder;
 
                 tasks:
                   - id: list_alpine
-                    type: io.kestra.plugin.docker.ImageLs
+                    type: io.kestra.plugin.docker.cli.ImageLs
                     imageNameFilter: alpine
                 """
         ),
@@ -66,15 +67,15 @@ import lombok.experimental.SuperBuilder;
 
                 tasks:
                   - id: before
-                    type: io.kestra.plugin.docker.ImageLs
+                    type: io.kestra.plugin.docker.cli.ImageLs
                     imageNameFilter: alpine:latest
 
                   - id: pull
-                    type: io.kestra.plugin.docker.Pull
+                    type: io.kestra.plugin.docker.cli.Pull
                     image: alpine:latest
 
                   - id: after
-                    type: io.kestra.plugin.docker.ImageLs
+                    type: io.kestra.plugin.docker.cli.ImageLs
                     imageNameFilter: alpine:latest
 
                   - id: check

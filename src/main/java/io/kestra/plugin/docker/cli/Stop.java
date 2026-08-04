@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -24,6 +24,7 @@ import io.kestra.core.models.annotations.PluginProperty;
     description = "Stops a running container by default, or kills it when `kill` is true, then optionally deletes it. Defaults: kill=false, delete=true."
 )
 @Plugin(
+    aliases = "io.kestra.plugin.docker.Stop",
     examples = {
         @Example(
             title = "Kill a Docker container by ID",
@@ -34,7 +35,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: run
-                    type: io.kestra.plugin.docker.Stop
+                    type: io.kestra.plugin.docker.cli.Stop
                     containerId: 8088357a1974
                     kill: true
                 """
@@ -48,7 +49,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: stop
-                    type: io.kestra.plugin.docker.Stop
+                    type: io.kestra.plugin.docker.cli.Stop
                     containerId: my-app
                 """
         )

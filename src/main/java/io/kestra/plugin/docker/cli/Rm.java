@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import java.util.List;
 
@@ -25,6 +25,7 @@ import io.kestra.core.models.annotations.PluginProperty;
     description = "Deletes containers and/or images using the Docker daemon. Supports force deletion and removing attached volumes; defaults to safe (force=false, removeVolumes=false)."
 )
 @Plugin(
+    aliases = "io.kestra.plugin.docker.Rm",
     examples = {
         @Example(
             title = "Remove multiple docker containers by ID",
@@ -35,7 +36,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: remove_containers
-                    type: io.kestra.plugin.docker.Rm
+                    type: io.kestra.plugin.docker.cli.Rm
                     force: true
                     containerIds:
                         - 947795c71c71
@@ -51,7 +52,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: remove_containers
-                    type: io.kestra.plugin.docker.Rm
+                    type: io.kestra.plugin.docker.cli.Rm
                     force: true
                     containerIds:
                         - my-app

@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -37,6 +37,7 @@ import io.kestra.core.models.annotations.PluginProperty;
     description = "Builds an image from inline Dockerfile content or a path using the Docker daemon available to the task runner. Pulls the base image by default, tags are required, and pushing is optional with registry credentials; caller inherits daemon permissions."
 )
 @Plugin(
+    aliases = "io.kestra.plugin.docker.Build",
     examples = {
         @Example(
             title = "Build and push a Docker image to a registry",
@@ -47,7 +48,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: build
-                    type: io.kestra.plugin.docker.Build
+                    type: io.kestra.plugin.docker.cli.Build
                     push: true
                     dockerfile: |
                       FROM ubuntu
@@ -76,7 +77,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: build
-                    type: io.kestra.plugin.docker.Build
+                    type: io.kestra.plugin.docker.cli.Build
                     dockerfile: |
                       FROM python:3.10
                       RUN pip install --upgrade pip
@@ -99,7 +100,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: build
-                    type: io.kestra.plugin.docker.Build
+                    type: io.kestra.plugin.docker.cli.Build
                     dockerfile: |
                       FROM python:3.10
                       RUN pip install --upgrade pip
@@ -121,7 +122,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: build
-                    type: io.kestra.plugin.docker.Build
+                    type: io.kestra.plugin.docker.cli.Build
                     tags:
                       - my-py-data-app
                     dockerfile: |

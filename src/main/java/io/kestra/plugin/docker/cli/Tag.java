@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import com.github.dockerjava.api.DockerClient;
 
@@ -26,6 +26,7 @@ import io.kestra.core.models.annotations.PluginProperty;
     description = "Creates a new repository:tag for an existing local image using the Docker daemon."
 )
 @Plugin(
+    aliases = "io.kestra.plugin.docker.Tag",
     examples = {
         @Example(
             title = "Tag an existing Docker image",
@@ -36,7 +37,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: tag
-                    type: io.kestra.plugin.docker.Tag
+                    type: io.kestra.plugin.docker.cli.Tag
                     sourceImage: my-app:build-123
                     targetImage: my-registry.example.com/prod/my-app:1.0.0
                 """
