@@ -81,6 +81,9 @@ public class Pull extends AbstractModel implements RunnableTask<VoidOutput> {
 
         try (var client = httpClient(runContext)) {
             client.request(request, response -> {
+                if (response.getBody() == null) {
+                    return;
+                }
                 try (var reader = new BufferedReader(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8))) {
                     String line;
                     while ((line = reader.readLine()) != null) {

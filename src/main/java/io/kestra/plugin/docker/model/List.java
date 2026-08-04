@@ -8,7 +8,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.http.HttpRequest;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 
@@ -54,7 +53,8 @@ public class List extends AbstractModel implements RunnableTask<List.Output> {
             .build();
 
         try (var client = httpClient(runContext)) {
-            var models = client.request(request, ModelsResponse.class).getBody().models();
+            ModelsResponse body = client.request(request, ModelsResponse.class).getBody();
+            java.util.List<ModelInfo> models = body != null && body.models() != null ? body.models() : java.util.List.of();
             runContext.logger().info("Found {} model(s)", models.size());
             return Output.builder().models(models).build();
         }
