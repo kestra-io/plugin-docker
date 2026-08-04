@@ -1,13 +1,16 @@
 package io.kestra.plugin.docker.model;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.kestra.core.http.HttpRequest;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -70,29 +73,31 @@ public class Pull extends AbstractModel implements RunnableTask<VoidOutput> {
         var rHost = resolvedHost(runContext);
         var logger = runContext.logger();
 
-        var body = MAPPER.writeValueAsString(Map.of("fromImage", rModel));
-        var request = HttpRequest.newBuilder()
+        var request = HttpRequest.builder()
             .uri(URI.create(rHost + "/models/create"))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(body))
+            .method("POST")
+            .body(HttpRequest.JsonRequestBody.builder().content(Map.of("fromImage", rModel)).build())
             .build();
 
-        try (var client = HttpClient.newHttpClient()) {
-            var response = client.send(request, HttpResponse.BodyHandlers.ofLines());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new RuntimeException("DMR /models/create returned HTTP " + response.statusCode());
-            }
-            response.body().forEach(line -> {
-                logger.info("{}", line);
-                try {
-                    var node = MAPPER.readTree(line);
-                    if (node.has("error")) {
-                        throw new RuntimeException("Error pulling model " + rModel + ": " + node.get("error").asText());
+        try (var client = httpClient(runContext)) {
+            client.request(request, response -> {
+                try (var reader = new BufferedReader(new InputStreamReader(response.getBody(), StandardCharsets.UTF_8))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        logger.info("{}", line);
+                        try {
+                            var node = MAPPER.readTree(line);
+                            if (node.has("error")) {
+                                throw new RuntimeException("Error pulling model " + rModel + ": " + node.get("error").asText());
+                            }
+                        } catch (RuntimeException e) {
+                            throw e;
+                        } catch (Exception e) {
+                            // Non-JSON lines are treated as plain status output
+                        }
                     }
-                } catch (RuntimeException e) {
-                    throw e;
-                } catch (Exception e) {
-                    // Non-JSON lines are treated as plain status output
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
                 }
             });
         }

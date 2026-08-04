@@ -1,10 +1,8 @@
 package io.kestra.plugin.docker.model;
 
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 
+import io.kestra.core.http.HttpRequest;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -67,16 +65,13 @@ public class Delete extends AbstractModel implements RunnableTask<VoidOutput> {
         var id = ModelIdentifier.parse(rModel);
 
         var url = rHost + "/models/" + id.namespace() + "/" + id.name();
-        var request = HttpRequest.newBuilder()
+        var request = HttpRequest.builder()
             .uri(URI.create(url))
-            .DELETE()
+            .method("DELETE")
             .build();
 
-        try (var client = HttpClient.newHttpClient()) {
-            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new RuntimeException("DMR DELETE " + url + " returned HTTP " + response.statusCode());
-            }
+        try (var client = httpClient(runContext)) {
+            client.request(request, String.class);
         }
         runContext.logger().info("Deleted model {}", rModel);
         return null;

@@ -1,15 +1,11 @@
 package io.kestra.plugin.docker.model;
 
 import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
+import io.kestra.core.http.HttpRequest;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -17,7 +13,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.serializers.JacksonMapper;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -59,8 +54,6 @@ import lombok.experimental.SuperBuilder;
     }
 )
 public class Configure extends AbstractModel implements RunnableTask<VoidOutput> {
-
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Schema(
         title = "Model identifier",
@@ -106,19 +99,15 @@ public class Configure extends AbstractModel implements RunnableTask<VoidOutput>
             bodyMap.put("runtimeFlags", rRuntimeFlags);
         }
 
-        var body = MAPPER.writeValueAsString(bodyMap);
         var url = rHost + "/models/" + id.namespace() + "/" + id.name() + "/configure";
-        var request = HttpRequest.newBuilder()
+        var request = HttpRequest.builder()
             .uri(URI.create(url))
-            .header("Content-Type", "application/json")
-            .POST(HttpRequest.BodyPublishers.ofString(body))
+            .method("POST")
+            .body(HttpRequest.JsonRequestBody.builder().content(bodyMap).build())
             .build();
 
-        try (var client = HttpClient.newHttpClient()) {
-            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                throw new RuntimeException("DMR POST " + url + " returned HTTP " + response.statusCode());
-            }
+        try (var client = httpClient(runContext)) {
+            client.request(request, String.class);
         }
         runContext.logger().info("Configured model {}", rModel);
         return null;
