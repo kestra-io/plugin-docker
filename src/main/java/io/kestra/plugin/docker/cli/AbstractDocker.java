@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import java.net.URI;
 import java.util.Map;

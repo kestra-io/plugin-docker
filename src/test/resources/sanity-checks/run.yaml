@@ -28,7 +28,7 @@ sla:
 
 pluginDefaults:
   - forced: false
-    type: io.kestra.plugin.docker.Run
+    type: io.kestra.plugin.docker.cli.Run
     values:
       containerImage: alpine:latest
       entryPoint: ["/bin/sh", "-c"]
@@ -40,7 +40,7 @@ tasks:
     allowWarning: true
     tasks:
       - id: testEnvAndInputFiles
-        type: io.kestra.plugin.docker.Run
+        type: io.kestra.plugin.docker.cli.Run
         containerImage: "{{ 'alpine:latest' }}"
         entryPoint: "{{ vars.testDynamicEntryPoint }}"
         pullPolicy: "{{ 'IF_NOT_PRESENT' }}"
@@ -55,12 +55,12 @@ tasks:
           - inputFileOutput.txt
 
       - id: makeVarsOutput
-        type: io.kestra.plugin.docker.Run
+        type: io.kestra.plugin.docker.cli.Run
         commands:
           - echo '::{"outputs":{"test":"value","int":2,"bool":true,"float":3.65}}::'
 
       - id: testCpuMemoryConsumption
-        type: io.kestra.plugin.docker.Run
+        type: io.kestra.plugin.docker.cli.Run
         wait: true
         cpu:
           # # Should be possible to use a floating number but the cpu property is cast to a long which prevents us to do so
@@ -96,7 +96,7 @@ tasks:
         #       - usage.txt
 
       - id: testUserPrivileged
-        type: io.kestra.plugin.docker.Run
+        type: io.kestra.plugin.docker.cli.Run
         allowFailure: true
         inputFiles:
           whoami.txt: "not privileged"
@@ -113,7 +113,7 @@ tasks:
           someDir/someDummyFile.txt: "{{ vars.testFileContent }}"
         tasks:
           - id: testVolumes
-            type: io.kestra.plugin.docker.Run
+            type: io.kestra.plugin.docker.cli.Run
             commands:
               - cat someDir/someDummyFile.txt > someDir/someOtherFile.txt
             volumes:
@@ -122,20 +122,20 @@ tasks:
               - someDir/someOtherFile.txt
 
       - id: testPullPolicy
-        type: io.kestra.plugin.docker.Run
+        type: io.kestra.plugin.docker.cli.Run
         pullPolicy: IF_NOT_PRESENT
         wait: "{{ true }}"
         commands:
           - echo "Testing pull policy"
 
       - id: testWait
-        type: io.kestra.plugin.docker.Run
+        type: io.kestra.plugin.docker.cli.Run
         wait: false
         commands:
           - sleep 120
 
       - id: testExtraHostsNetworkMode
-        type: io.kestra.plugin.docker.Run
+        type: io.kestra.plugin.docker.cli.Run
         commands:
           - cat /etc/hosts > hosts.txt
         #host: "{{ 'localhost' }}"
@@ -146,7 +146,7 @@ tasks:
           - hosts.txt
 
       # - id: test-config-credentials
-      #   type: io.kestra.plugin.docker.Run
+      #   type: io.kestra.plugin.docker.cli.Run
       #   containerImage: private.registry/my-image:latest
       #   config: "{{ secret('docker_config') }}"
       #   credentials:

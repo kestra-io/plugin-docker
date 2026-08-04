@@ -11,7 +11,7 @@ tasks:
     extension: .yaml
 
   - id: up
-    type: io.kestra.plugin.docker.Compose
+    type: io.kestra.plugin.docker.cli.Compose
     taskRunner:
       type: io.kestra.plugin.scripts.runner.docker.Docker
       volumes:

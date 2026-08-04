@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import java.util.List;
 import java.util.Set;
@@ -28,6 +28,7 @@ import io.kestra.core.models.annotations.PluginProperty;
     description = "Pushes existing local images by tag to a remote registry using the available Docker daemon and optional registry credentials. Tags must already exist locally."
 )
 @Plugin(
+    aliases = "io.kestra.plugin.docker.Push",
     examples = {
         @Example(
             title = "Push a previously built image to DockerHub",
@@ -38,7 +39,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: push
-                    type: io.kestra.plugin.docker.Push
+                    type: io.kestra.plugin.docker.cli.Push
                     tags:
                       - image/demo:latest
                     credentials:
@@ -56,7 +57,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 
                 tasks:
                   - id: build
-                    type: io.kestra.plugin.docker.Build
+                    type: io.kestra.plugin.docker.cli.Build
                     dockerfile: |
                       FROM alpine
                       RUN echo "hello"
@@ -64,7 +65,7 @@ import io.kestra.core.models.annotations.PluginProperty;
                       - my-registry.example.com/my-app:latest
 
                   - id: push
-                    type: io.kestra.plugin.docker.Push
+                    type: io.kestra.plugin.docker.cli.Push
                     tags:
                       - my-registry.example.com/my-app:latest
                     credentials:

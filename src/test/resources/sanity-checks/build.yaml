@@ -20,7 +20,7 @@ tasks:
     namespace: "{{ flow.namespace}}"
 
   - id: build
-    type: io.kestra.plugin.docker.Build
+    type: io.kestra.plugin.docker.cli.Build
     dockerfile: |
       FROM alpine:latest
       RUN mkdir /app
@@ -41,11 +41,11 @@ tasks:
     type: io.kestra.plugin.core.log.Log
     message: The previous job created an image with id {{outputs.build.imageId}}
   - id: run1
-    type: io.kestra.plugin.docker.Run
+    type: io.kestra.plugin.docker.cli.Run
     pullPolicy: NEVER
     containerImage: qa_alpine:latest
   - id: run2
-    type: io.kestra.plugin.docker.Run
+    type: io.kestra.plugin.docker.cli.Run
     pullPolicy: NEVER
     containerImage: qa_alpine:latest
     commands:

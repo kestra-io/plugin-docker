@@ -1,4 +1,4 @@
-package io.kestra.plugin.docker;
+package io.kestra.plugin.docker.cli;
 
 import java.util.List;
 
@@ -28,6 +28,7 @@ import lombok.experimental.SuperBuilder;
     description = "Cleans up unused Docker build cache, containers, images, networks, or volumes via the daemon. Prune type is required; dangling defaults to false."
 )
 @Plugin(
+    aliases = "io.kestra.plugin.docker.Prune",
     examples = {
         @Example(
             title = "Prune all docker images",
@@ -38,7 +39,7 @@ import lombok.experimental.SuperBuilder;
 
                 tasks:
                   - id: prune_images
-                    type: io.kestra.plugin.docker.Prune
+                    type: io.kestra.plugin.docker.cli.Prune
                     pruneType: IMAGES
                     dangling: true
                 """
