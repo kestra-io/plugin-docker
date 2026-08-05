@@ -2,11 +2,9 @@ package io.kestra.plugin.docker.model;
 
 import java.util.Map;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
+import com.github.tomakehurst.wiremock.junit5.WireMockTest;
 
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -16,10 +14,7 @@ import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.hasSize;
@@ -27,38 +22,26 @@ import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
+@WireMockTest
 class ListTest {
 
     @Inject
     RunContextFactory runContextFactory;
 
-    private WireMockServer server;
-
-    @BeforeEach
-    void startStub() {
-        server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
-        server.start();
-    }
-
-    @AfterEach
-    void stopStub() {
-        server.stop();
-    }
-
-    private List listTask() {
+    private List listTask(WireMockRuntimeInfo wm) {
         return List.builder()
             .id("list-test")
             .type(List.class.getName())
-            .host(Property.ofValue("http://localhost:" + server.port()))
+            .host(Property.ofValue(wm.getHttpBaseUrl()))
             .build();
     }
 
     @Test
-    void happyPath() throws Exception {
-        server.stubFor(get(urlEqualTo("/models"))
+    void happyPath(WireMockRuntimeInfo wm) throws Exception {
+        stubFor(get(urlEqualTo("/models"))
             .willReturn(okJson("{\"models\":[{\"id\":\"ai/smollm2\",\"created\":1234567890,\"owned_by\":\"docker\"}]}")));
 
-        var task = listTask();
+        var task = listTask(wm);
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         var output = task.run(runContext);
 
@@ -69,12 +52,12 @@ class ListTest {
     }
 
     @Test
-    void missingModelsFieldReturnsEmptyList() throws Exception {
+    void missingModelsFieldReturnsEmptyList(WireMockRuntimeInfo wm) throws Exception {
         // A JSON body with no "models" field must yield an empty list, not an NPE.
-        server.stubFor(get(urlEqualTo("/models"))
+        stubFor(get(urlEqualTo("/models"))
             .willReturn(okJson("{}")));
 
-        var task = listTask();
+        var task = listTask(wm);
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         var output = task.run(runContext);
 
@@ -82,11 +65,11 @@ class ListTest {
     }
 
     @Test
-    void nonSuccessStatusThrows() {
-        server.stubFor(get(urlEqualTo("/models"))
+    void nonSuccessStatusThrows(WireMockRuntimeInfo wm) {
+        stubFor(get(urlEqualTo("/models"))
             .willReturn(aResponse().withStatus(500)));
 
-        var task = listTask();
+        var task = listTask(wm);
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
 
         assertThrows(Exception.class, () -> task.run(runContext));
