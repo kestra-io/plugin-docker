@@ -23,23 +23,3 @@ docker push localhost:5000/ubuntu:unit-test
 #Logout
 docker rmi ubuntu:20.04
 docker logout localhost:5000
-
-#Install Docker Model Runner for the io.kestra.plugin.docker.model IT tests
-sudo apt-get update
-sudo apt-get install -y docker-model-plugin
-
-#Start the model runner on TCP 12434 (default port on Docker Engine)
-docker model install-runner --port 12434
-
-#Wait for the DMR API to answer before the tests probe it
-for i in $(seq 1 30); do
-    if curl -sf http://localhost:12434/models >/dev/null 2>&1; then
-        echo "Docker Model Runner is up"
-        break
-    fi
-    echo "Waiting for Docker Model Runner... ($i/30)"
-    sleep 2
-done
-
-#Pre-pull the small model the IT tests use, so Delete and Configure have it available
-docker model pull ai/smollm2
