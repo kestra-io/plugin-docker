@@ -1,9 +1,9 @@
 package io.kestra.plugin.docker.model;
 
-import java.net.InetSocketAddress;
 import java.util.Map;
 
-import com.sun.net.httpserver.HttpServer;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,8 +16,15 @@ import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.get;
+import static com.github.tomakehurst.wiremock.client.WireMock.okJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class ListTest {
@@ -25,36 +32,33 @@ class ListTest {
     @Inject
     RunContextFactory runContextFactory;
 
-    private HttpServer server;
-    private int port;
+    private WireMockServer server;
 
     @BeforeEach
-    void startStub() throws Exception {
-        server = HttpServer.create(new InetSocketAddress(0), 0);
-        port = server.getAddress().getPort();
-        server.createContext("/models", exchange -> {
-            var body = "{\"models\":[{\"id\":\"ai/smollm2\",\"created\":1234567890,\"owned_by\":\"docker\"}]}".getBytes();
-            exchange.sendResponseHeaders(200, body.length);
-            exchange.getResponseHeaders().set("Content-Type", "application/json");
-            exchange.getResponseBody().write(body);
-            exchange.getResponseBody().close();
-        });
+    void startStub() {
+        server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         server.start();
     }
 
     @AfterEach
     void stopStub() {
-        server.stop(0);
+        server.stop();
+    }
+
+    private List listTask() {
+        return List.builder()
+            .id("list-test")
+            .type(List.class.getName())
+            .host(Property.ofValue("http://localhost:" + server.port()))
+            .build();
     }
 
     @Test
     void happyPath() throws Exception {
-        var task = List.builder()
-            .id("list-test")
-            .type(List.class.getName())
-            .host(Property.ofValue("http://localhost:" + port))
-            .build();
+        server.stubFor(get(urlEqualTo("/models"))
+            .willReturn(okJson("{\"models\":[{\"id\":\"ai/smollm2\",\"created\":1234567890,\"owned_by\":\"docker\"}]}")));
 
+        var task = listTask();
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         var output = task.run(runContext);
 
@@ -62,5 +66,29 @@ class ListTest {
         assertThat(output.getModels().getFirst().id(), is("ai/smollm2"));
         assertThat(output.getModels().getFirst().created(), is(1234567890L));
         assertThat(output.getModels().getFirst().ownedBy(), is("docker"));
+    }
+
+    @Test
+    void missingModelsFieldReturnsEmptyList() throws Exception {
+        // A JSON body with no "models" field must yield an empty list, not an NPE.
+        server.stubFor(get(urlEqualTo("/models"))
+            .willReturn(okJson("{}")));
+
+        var task = listTask();
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+        var output = task.run(runContext);
+
+        assertThat(output.getModels(), is(empty()));
+    }
+
+    @Test
+    void nonSuccessStatusThrows() {
+        server.stubFor(get(urlEqualTo("/models"))
+            .willReturn(aResponse().withStatus(500)));
+
+        var task = listTask();
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+        assertThrows(Exception.class, () -> task.run(runContext));
     }
 }

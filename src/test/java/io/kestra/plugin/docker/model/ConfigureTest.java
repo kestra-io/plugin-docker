@@ -1,15 +1,10 @@
 package io.kestra.plugin.docker.model;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 
-import com.sun.net.httpserver.HttpServer;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,8 +17,14 @@ import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalToJson;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.empty;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class ConfigureTest {
@@ -31,36 +32,28 @@ class ConfigureTest {
     @Inject
     RunContextFactory runContextFactory;
 
-    private HttpServer server;
-    private int port;
-    private final AtomicReference<String> capturedBody = new AtomicReference<>();
+    private WireMockServer server;
 
     @BeforeEach
-    void startStub() throws Exception {
-        server = HttpServer.create(new InetSocketAddress(0), 0);
-        port = server.getAddress().getPort();
-        server.createContext("/models/", exchange -> {
-            capturedBody.set(
-                new BufferedReader(new InputStreamReader(exchange.getRequestBody(), StandardCharsets.UTF_8))
-                    .lines().collect(Collectors.joining())
-            );
-            exchange.sendResponseHeaders(200, -1);
-            exchange.getResponseBody().close();
-        });
+    void startStub() {
+        server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         server.start();
     }
 
     @AfterEach
     void stopStub() {
-        server.stop(0);
+        server.stop();
     }
 
     @Test
     void happyPath_sendsContextSizeAndFlags() throws Exception {
+        server.stubFor(post(urlEqualTo("/models/ai/smollm2/configure"))
+            .willReturn(aResponse().withStatus(200)));
+
         var task = Configure.builder()
             .id("configure-test")
             .type(Configure.class.getName())
-            .host(Property.ofValue("http://localhost:" + port))
+            .host(Property.ofValue("http://localhost:" + server.port()))
             .model(Property.ofValue("ai/smollm2"))
             .contextSize(Property.ofValue(4096))
             .runtimeFlags(Property.ofValue(List.of("--temp 0.7")))
@@ -69,8 +62,8 @@ class ConfigureTest {
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         task.run(runContext);
 
-        assertThat(capturedBody.get(), containsString("\"contextSize\":4096"));
-        assertThat(capturedBody.get(), containsString("\"--temp 0.7\""));
+        server.verify(postRequestedFor(urlEqualTo("/models/ai/smollm2/configure"))
+            .withRequestBody(equalToJson("{\"contextSize\":4096,\"runtimeFlags\":[\"--temp 0.7\"]}")));
     }
 
     @Test
@@ -78,14 +71,32 @@ class ConfigureTest {
         var task = Configure.builder()
             .id("configure-noop-test")
             .type(Configure.class.getName())
-            .host(Property.ofValue("http://localhost:" + port))
+            .host(Property.ofValue("http://localhost:" + server.port()))
             .model(Property.ofValue("ai/smollm2"))
             .build();
 
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         task.run(runContext);
 
-        // No HTTP call made — capturedBody stays null
-        assertThat(capturedBody.get(), nullValue());
+        // Neither contextSize nor runtimeFlags set: no HTTP call must be made.
+        assertThat(server.getAllServeEvents(), empty());
+    }
+
+    @Test
+    void nonSuccessStatusThrows() {
+        server.stubFor(post(urlEqualTo("/models/ai/smollm2/configure"))
+            .willReturn(aResponse().withStatus(400)));
+
+        var task = Configure.builder()
+            .id("configure-error-test")
+            .type(Configure.class.getName())
+            .host(Property.ofValue("http://localhost:" + server.port()))
+            .model(Property.ofValue("ai/smollm2"))
+            .contextSize(Property.ofValue(4096))
+            .build();
+
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+        assertThrows(Exception.class, () -> task.run(runContext));
     }
 }

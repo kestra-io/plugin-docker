@@ -1,10 +1,9 @@
 package io.kestra.plugin.docker.model;
 
-import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicReference;
 
-import com.sun.net.httpserver.HttpServer;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,8 +16,11 @@ import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.delete;
+import static com.github.tomakehurst.wiremock.client.WireMock.deleteRequestedFor;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class DeleteTest {
@@ -26,39 +28,48 @@ class DeleteTest {
     @Inject
     RunContextFactory runContextFactory;
 
-    private HttpServer server;
-    private int port;
-    private final AtomicReference<String> capturedUri = new AtomicReference<>();
+    private WireMockServer server;
 
     @BeforeEach
-    void startStub() throws Exception {
-        server = HttpServer.create(new InetSocketAddress(0), 0);
-        port = server.getAddress().getPort();
-        server.createContext("/models/", exchange -> {
-            capturedUri.set(exchange.getRequestURI().getPath());
-            exchange.sendResponseHeaders(200, -1);
-            exchange.getResponseBody().close();
-        });
+    void startStub() {
+        server = new WireMockServer(WireMockConfiguration.options().dynamicPort());
         server.start();
     }
 
     @AfterEach
     void stopStub() {
-        server.stop(0);
+        server.stop();
+    }
+
+    private Delete deleteTask() {
+        return Delete.builder()
+            .id("delete-test")
+            .type(Delete.class.getName())
+            .host(Property.ofValue("http://localhost:" + server.port()))
+            .model(Property.ofValue("ai/smollm2"))
+            .build();
     }
 
     @Test
     void happyPath_buildsCorrectUrl() throws Exception {
-        var task = Delete.builder()
-            .id("delete-test")
-            .type(Delete.class.getName())
-            .host(Property.ofValue("http://localhost:" + port))
-            .model(Property.ofValue("ai/smollm2"))
-            .build();
+        server.stubFor(delete(urlEqualTo("/models/ai/smollm2"))
+            .willReturn(aResponse().withStatus(200)));
 
+        var task = deleteTask();
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         task.run(runContext);
 
-        assertThat(capturedUri.get(), is("/models/ai/smollm2"));
+        server.verify(deleteRequestedFor(urlEqualTo("/models/ai/smollm2")));
+    }
+
+    @Test
+    void nonSuccessStatusThrows() {
+        server.stubFor(delete(urlEqualTo("/models/ai/smollm2"))
+            .willReturn(aResponse().withStatus(404)));
+
+        var task = deleteTask();
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+        assertThrows(Exception.class, () -> task.run(runContext));
     }
 }
