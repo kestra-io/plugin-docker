@@ -18,6 +18,7 @@
 Single-module plugin. Source packages under `io.kestra.plugin`:
 
 - `docker`
+- `docker.model`
 
 ### Key Plugin Classes
 
@@ -31,16 +32,25 @@ Single-module plugin. Source packages under `io.kestra.plugin`:
 - `io.kestra.plugin.docker.Run`
 - `io.kestra.plugin.docker.Stop`
 - `io.kestra.plugin.docker.Tag`
+- `io.kestra.plugin.docker.model.Pull` — pull a model via DMR REST API
+- `io.kestra.plugin.docker.model.List` — list locally available models via DMR REST API
+- `io.kestra.plugin.docker.model.Delete` — delete a model via DMR REST API
 
 ### Project Structure
 
 ```
 plugin-docker/
 ├── src/main/java/io/kestra/plugin/docker/
+├── src/main/java/io/kestra/plugin/docker/model/
 ├── src/test/java/io/kestra/plugin/docker/
+├── src/test/java/io/kestra/plugin/docker/model/
 ├── build.gradle
 └── README.md
 ```
+
+### Testing
+
+`io.kestra.plugin.docker.model.DeleteIT`, `PullIT`, and `ListIT` are integration tests that run against a **live** Docker Model Runner and are gated behind `@DockerModelRunnerTest`, which requires both `DMR_IT_TESTS=true` and a reachable DMR at `localhost:12434`. They are skipped by default (including in CI) and are **destructive**: `PullIT` and `DeleteIT` pull and delete the real `ai/smollm2` tag on whatever DMR instance is reachable. DMR tags are not test-namespaced, so a developer running with the opt-in set and an existing `ai/smollm2` model of their own will lose it. Only set `DMR_IT_TESTS=true` against a DMR instance you don't mind losing that model on.
 
 ## References
 
