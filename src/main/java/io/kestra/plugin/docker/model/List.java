@@ -87,8 +87,8 @@ public class List extends AbstractModel implements RunnableTask<List.Output> {
             description = "Human-readable references pointing at this model, e.g. `docker.io/ai/nomic-embed-text-v1.5:latest`."
         ) java.util.List<String> tags,
         @Schema(title = "Creation timestamp", description = "Unix epoch seconds at which the model was created.") Long created,
-        @Schema(title = "Model configuration") Config config
-    ) {}
+        @Schema(title = "Model configuration") Config config) {
+    }
 
     @Schema(title = "Model configuration details")
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -97,8 +97,8 @@ public class List extends AbstractModel implements RunnableTask<List.Output> {
         @Schema(title = "Quantization method", description = "e.g. `MOSTLY_F16`.") String quantization,
         @Schema(title = "Parameter count", description = "e.g. `136.73M`.") String parameters,
         @Schema(title = "Model architecture", description = "e.g. `nomic-bert`.") String architecture,
-        @Schema(title = "On-disk size", description = "e.g. `260.86MiB`.") String size
-    ) {}
+        @Schema(title = "On-disk size", description = "e.g. `260.86MiB`.") String size) {
+    }
 
     @Builder
     @Getter

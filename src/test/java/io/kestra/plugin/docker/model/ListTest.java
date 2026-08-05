@@ -4,10 +4,10 @@ import java.net.ServerSocket;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.jupiter.api.Test;
+
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-
-import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -33,11 +33,10 @@ class ListTest {
     RunContextFactory runContextFactory;
 
     // Real DMR shape: a bare JSON array, "id" is a content digest, tags carry the human-readable name.
-    private static final String REAL_MODELS_RESPONSE =
-        "[{\"id\":\"sha256:653017dd060f5cd345118ff90382ceb213d383de2887820d2f303893d32ef40d\","
-            + "\"tags\":[\"docker.io/ai/nomic-embed-text-v1.5:latest\"],\"created\":1778854020,"
-            + "\"config\":{\"format\":\"gguf\",\"quantization\":\"MOSTLY_F16\",\"parameters\":\"136.73M\","
-            + "\"architecture\":\"nomic-bert\",\"size\":\"260.86MiB\",\"gguf\":{\"general.architecture\":\"nomic-bert\"}}}]";
+    private static final String REAL_MODELS_RESPONSE = "[{\"id\":\"sha256:653017dd060f5cd345118ff90382ceb213d383de2887820d2f303893d32ef40d\","
+        + "\"tags\":[\"docker.io/ai/nomic-embed-text-v1.5:latest\"],\"created\":1778854020,"
+        + "\"config\":{\"format\":\"gguf\",\"quantization\":\"MOSTLY_F16\",\"parameters\":\"136.73M\","
+        + "\"architecture\":\"nomic-bert\",\"size\":\"260.86MiB\",\"gguf\":{\"general.architecture\":\"nomic-bert\"}}}]";
 
     private List task(String baseUrl) {
         return List.builder()
@@ -102,7 +101,8 @@ class ListTest {
     @Test
     void transportFailure_throwsActionableError() throws Exception {
         try (var serverSocket = new ServerSocket(0)) {
-            var acceptThread = new Thread(() -> {
+            var acceptThread = new Thread(() ->
+            {
                 try {
                     while (!serverSocket.isClosed()) {
                         serverSocket.accept().close();

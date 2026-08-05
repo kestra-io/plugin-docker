@@ -77,7 +77,8 @@ public class Pull extends AbstractModel implements RunnableTask<VoidOutput> {
             .body(HttpRequest.JsonRequestBody.of(Map.of("from", rModel)))
             .build();
 
-        this.executeStreaming(runContext, request, line -> {
+        this.executeStreaming(runContext, request, line ->
+        {
             if (line.isBlank()) {
                 return;
             }

@@ -51,12 +51,16 @@ public abstract class AbstractModel extends Task {
     private HttpClient httpClient(RunContext runContext) throws IllegalVariableEvaluationException {
         return HttpClient.builder()
             .runContext(runContext)
-            .configuration(HttpConfiguration.builder()
-                .timeout(TimeoutConfiguration.builder()
-                    .connectTimeout(Property.ofValue(CONNECT_TIMEOUT))
-                    .readIdleTimeout(Property.ofValue(READ_IDLE_TIMEOUT))
-                    .build())
-                .build())
+            .configuration(
+                HttpConfiguration.builder()
+                    .timeout(
+                        TimeoutConfiguration.builder()
+                            .connectTimeout(Property.ofValue(CONNECT_TIMEOUT))
+                            .readIdleTimeout(Property.ofValue(READ_IDLE_TIMEOUT))
+                            .build()
+                    )
+                    .build()
+            )
             .build();
     }
 

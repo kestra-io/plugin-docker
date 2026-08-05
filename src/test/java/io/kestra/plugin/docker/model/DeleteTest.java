@@ -3,10 +3,10 @@ package io.kestra.plugin.docker.model;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.jupiter.api.Test;
+
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-
-import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -39,8 +39,10 @@ class DeleteTest {
     @Test
     void happyPath_buildsCorrectUrl(WireMockRuntimeInfo wm) throws Exception {
         // Real DMR shape: array of untag/delete actions.
-        stubFor(delete(urlEqualTo("/models/ai/smollm2"))
-            .willReturn(okJson("[{\"Untagged\":\"docker.io/ai/smollm2:latest\"},{\"Deleted\":\"sha256:abc\"}]")));
+        stubFor(
+            delete(urlEqualTo("/models/ai/smollm2"))
+                .willReturn(okJson("[{\"Untagged\":\"docker.io/ai/smollm2:latest\"},{\"Deleted\":\"sha256:abc\"}]"))
+        );
 
         var task = task(wm.getHttpBaseUrl(), "ai/smollm2");
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
@@ -51,8 +53,10 @@ class DeleteTest {
 
     @Test
     void nonTwoxx_includesResponseBodyInMessage(WireMockRuntimeInfo wm) {
-        stubFor(delete(urlEqualTo("/models/ai/does-not-exist"))
-            .willReturn(aResponse().withStatus(404).withBody("error while deleting model: model not found")));
+        stubFor(
+            delete(urlEqualTo("/models/ai/does-not-exist"))
+                .willReturn(aResponse().withStatus(404).withBody("error while deleting model: model not found"))
+        );
 
         var task = task(wm.getHttpBaseUrl(), "ai/does-not-exist");
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());

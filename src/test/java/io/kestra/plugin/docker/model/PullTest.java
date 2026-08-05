@@ -4,10 +4,10 @@ import java.net.ServerSocket;
 import java.util.Map;
 import java.util.UUID;
 
+import org.junit.jupiter.api.Test;
+
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
-
-import org.junit.jupiter.api.Test;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
@@ -42,25 +42,35 @@ class PullTest {
     @Test
     void happyPath_sendsFromFieldAndStreamsProgress(WireMockRuntimeInfo wm) throws Exception {
         // Real DMR streaming shape captured against a live instance.
-        stubFor(post(urlEqualTo("/models/create")).willReturn(aResponse().withStatus(200).withBody(
-            "{\"type\":\"progress\",\"message\":\"Downloaded: 0.01 MB\",\"total\":274303184,\"layer\":{\"id\":\"sha256:abc\",\"size\":12624,\"current\":12624},\"mode\":\"pull\"}\n"
-                + "{\"type\":\"success\",\"message\":\"Model pulled successfully\"}\n"
-        )));
+        stubFor(
+            post(urlEqualTo("/models/create")).willReturn(
+                aResponse().withStatus(200).withBody(
+                    "{\"type\":\"progress\",\"message\":\"Downloaded: 0.01 MB\",\"total\":274303184,\"layer\":{\"id\":\"sha256:abc\",\"size\":12624,\"current\":12624},\"mode\":\"pull\"}\n"
+                        + "{\"type\":\"success\",\"message\":\"Model pulled successfully\"}\n"
+                )
+            )
+        );
 
         var task = task(wm.getHttpBaseUrl(), "ai/smollm2");
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
 
         assertThat(task.run(runContext), nullValue());
         // Verified against a real DMR: the correct request field is "from", not "fromImage".
-        verify(postRequestedFor(urlEqualTo("/models/create"))
-            .withRequestBody(equalToJson("{\"from\":\"ai/smollm2\"}")));
+        verify(
+            postRequestedFor(urlEqualTo("/models/create"))
+                .withRequestBody(equalToJson("{\"from\":\"ai/smollm2\"}"))
+        );
     }
 
     @Test
     void errorLine_throwsWithDmrMessage(WireMockRuntimeInfo wm) {
-        stubFor(post(urlEqualTo("/models/create")).willReturn(aResponse().withStatus(200).withBody(
-            "{\"type\":\"error\",\"error\":\"Invalid model reference\"}\n"
-        )));
+        stubFor(
+            post(urlEqualTo("/models/create")).willReturn(
+                aResponse().withStatus(200).withBody(
+                    "{\"type\":\"error\",\"error\":\"Invalid model reference\"}\n"
+                )
+            )
+        );
 
         var task = task(wm.getHttpBaseUrl(), "not-a-model");
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
@@ -85,7 +95,8 @@ class PullTest {
     @Test
     void transportFailure_throwsActionableError() throws Exception {
         try (var serverSocket = new ServerSocket(0)) {
-            var acceptThread = new Thread(() -> {
+            var acceptThread = new Thread(() ->
+            {
                 try {
                     while (!serverSocket.isClosed()) {
                         serverSocket.accept().close();
