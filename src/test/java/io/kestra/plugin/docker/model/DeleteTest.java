@@ -1,6 +1,7 @@
 package io.kestra.plugin.docker.model;
 
 import java.util.Map;
+import java.util.UUID;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
 import com.github.tomakehurst.wiremock.junit5.WireMockTest;
@@ -15,6 +16,8 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -24,21 +27,22 @@ class DeleteTest {
     @Inject
     RunContextFactory runContextFactory;
 
-    private Delete deleteTask(WireMockRuntimeInfo wm) {
+    private Delete task(String baseUrl, String model) {
         return Delete.builder()
-            .id("delete-test")
+            .id("delete-test-" + UUID.randomUUID())
             .type(Delete.class.getName())
-            .host(Property.ofValue(wm.getHttpBaseUrl()))
-            .model(Property.ofValue("ai/smollm2"))
+            .host(Property.ofValue(baseUrl))
+            .model(Property.ofValue(model))
             .build();
     }
 
     @Test
     void happyPath_buildsCorrectUrl(WireMockRuntimeInfo wm) throws Exception {
+        // Real DMR shape: array of untag/delete actions.
         stubFor(delete(urlEqualTo("/models/ai/smollm2"))
-            .willReturn(aResponse().withStatus(200)));
+            .willReturn(okJson("[{\"Untagged\":\"docker.io/ai/smollm2:latest\"},{\"Deleted\":\"sha256:abc\"}]")));
 
-        var task = deleteTask(wm);
+        var task = task(wm.getHttpBaseUrl(), "ai/smollm2");
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         task.run(runContext);
 
@@ -46,13 +50,14 @@ class DeleteTest {
     }
 
     @Test
-    void nonSuccessStatusThrows(WireMockRuntimeInfo wm) {
-        stubFor(delete(urlEqualTo("/models/ai/smollm2"))
-            .willReturn(aResponse().withStatus(404)));
+    void nonTwoxx_includesResponseBodyInMessage(WireMockRuntimeInfo wm) {
+        stubFor(delete(urlEqualTo("/models/ai/does-not-exist"))
+            .willReturn(aResponse().withStatus(404).withBody("error while deleting model: model not found")));
 
-        var task = deleteTask(wm);
+        var task = task(wm.getHttpBaseUrl(), "ai/does-not-exist");
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+        var ex = assertThrows(Exception.class, () -> task.run(runContext));
 
-        assertThrows(Exception.class, () -> task.run(runContext));
+        assertThat(ex.getMessage(), containsString("error while deleting model: model not found"));
     }
 }
