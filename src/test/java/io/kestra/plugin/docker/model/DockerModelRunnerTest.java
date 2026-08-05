@@ -16,13 +16,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 /**
- * Skips any annotated test unless a developer has explicitly opted in via the {@value Condition#OPT_IN_ENV_VAR}
- * environment variable AND a live Docker Model Runner answers at localhost:12434.
- * <p>
- * These tests pull and delete the real {@code ai/smollm2} tag against whatever DMR instance is reachable.
- * DMR tags are not test-namespaced: if the developer running the suite already has {@code ai/smollm2} pulled
- * for their own use, opting in will delete it. Reachability alone is not a safe enough gate for that reason —
- * an explicit, informed opt-in is required in addition.
+ * Skips the annotated test unless {@value Condition#OPT_IN_ENV_VAR}=true and a live Docker Model
+ * Runner answers at localhost:12434. These tests pull and delete the real {@code ai/smollm2} tag,
+ * so an explicit opt-in is required, not just reachability.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
@@ -42,7 +38,7 @@ public @interface DockerModelRunnerTest {
                 "true".equalsIgnoreCase(System.getenv(OPT_IN_ENV_VAR)),
                 "Skipped: set " + OPT_IN_ENV_VAR + "=true to run Docker Model Runner integration tests. "
                     + "Warning: they pull and delete the real 'ai/smollm2' tag on the DMR instance at " + DMR_URL
-                    + " — only enable this against a DMR you don't mind losing that model on."
+                    + ". Only enable this against a DMR you don't mind losing that model on."
             );
 
             if (available == null) {

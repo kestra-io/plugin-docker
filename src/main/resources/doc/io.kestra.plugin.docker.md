@@ -18,6 +18,6 @@ If your goal is running a script inside a container as part of a flow, use a [Do
 
 ## Docker Model Runner
 
-The `io.kestra.plugin.docker.model` subpackage manages AI models through the Docker Model Runner (DMR) REST API, rather than through the Docker daemon. `host` on these tasks is a completely different setting from `AbstractDocker.host` above: it is DMR's own REST endpoint (defaults to `http://localhost:12434`), not a Docker daemon socket or TCP address, and it has no equivalent authentication mechanism — DMR does not require credentials.
+The `io.kestra.plugin.docker.model` subpackage manages AI models through the Docker Model Runner (DMR) REST API, rather than through the Docker daemon. `host` on these tasks is a completely different setting from `AbstractDocker.host` above: it is DMR's own REST endpoint (defaults to `http://localhost:12434`), not a Docker daemon socket or TCP address, and it has no equivalent authentication mechanism, and DMR does not require credentials.
 
 `List` fetches the models locally available on the DMR instance, including their content digest, tags, creation time, and configuration (format, quantization, parameter count, architecture, size). `Pull` downloads a model from a registry, e.g. `ai/smollm2`, streaming progress as it goes. `Delete` removes a locally available model; the model identifier is split into a namespace and a name (`ai/smollm2` → namespace `ai`, name `smollm2`; a bare name like `smollm2` defaults to namespace `ai`).

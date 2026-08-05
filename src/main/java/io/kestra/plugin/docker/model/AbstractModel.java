@@ -32,7 +32,7 @@ import lombok.experimental.SuperBuilder;
 public abstract class AbstractModel extends Task {
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(10);
-    // Idle timeout between reads, not a total duration cap — safe for long Pull streams as long as data keeps flowing.
+    // Idle timeout between reads, not a total cap. Fine for long Pull streams while data keeps flowing.
     private static final Duration READ_IDLE_TIMEOUT = Duration.ofSeconds(60);
 
     @Schema(
@@ -92,14 +92,9 @@ public abstract class AbstractModel extends Task {
     }
 
     /**
-     * io.kestra.core.http.client.HttpClient (verified against core 1.3.13) only re-wraps an
-     * IOException into HttpClientException when it's a SocketException or an SSLHandshakeException,
-     * or when its cause is already an HttpClientException. Any other IOException surfacing from the
-     * transport — e.g. a SocketTimeoutException on a stalled read, or NoHttpResponseException on a
-     * connection closed before any response — is rethrown as a bare `new RuntimeException(cause)`.
-     * That exact shape (plain RuntimeException wrapping an IOException) is the only one re-wrapped
-     * here, so genuine programming errors from our own code (NPE, IllegalArgumentException, ...)
-     * are left untouched.
+     * Core's HttpClient rethrows some transport IOExceptions (read timeout, connection closed before
+     * a response) as a bare RuntimeException wrapping the IOException. Wrap only that exact shape, so
+     * real programming errors like NPE are left untouched.
      */
     private static RuntimeException rethrowAsFailureIfTransport(String action, RuntimeException e) {
         if (e.getClass() == RuntimeException.class && e.getCause() instanceof IOException cause) {

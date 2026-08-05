@@ -14,8 +14,8 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
 /**
- * Relies on ai/nomic-embed-text-v1.5 being present on the live DMR instance used for IT tests —
- * no other IT test in this suite deletes or renames it.
+ * Relies on ai/nomic-embed-text-v1.5 being present on the live DMR instance. No other IT test
+ * in this suite deletes or renames it.
  */
 @KestraTest
 @DockerModelRunnerTest

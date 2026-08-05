@@ -58,7 +58,7 @@ public class List extends AbstractModel implements RunnableTask<List.Output> {
         var rBody = this.execute(runContext, request, String.class, "list models");
         if (rBody == null || rBody.isBlank()) {
             throw new IllegalStateException(
-                "Docker Model Runner returned an empty response for GET " + rHost + "/models — verify the DMR instance is running and reachable."
+                "Docker Model Runner returned an empty response for GET " + rHost + "/models. Verify the DMR instance is running and reachable."
             );
         }
 
