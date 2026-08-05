@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 @WireMockTest
-class ListModelsTest {
+class ListTest {
 
     @Inject
     RunContextFactory runContextFactory;
@@ -39,10 +39,10 @@ class ListModelsTest {
             + "\"config\":{\"format\":\"gguf\",\"quantization\":\"MOSTLY_F16\",\"parameters\":\"136.73M\","
             + "\"architecture\":\"nomic-bert\",\"size\":\"260.86MiB\",\"gguf\":{\"general.architecture\":\"nomic-bert\"}}}]";
 
-    private ListModels task(String baseUrl) {
-        return ListModels.builder()
+    private List task(String baseUrl) {
+        return List.builder()
             .id("list-models-test-" + UUID.randomUUID())
-            .type(ListModels.class.getName())
+            .type(List.class.getName())
             .host(Property.ofValue(baseUrl))
             .build();
     }

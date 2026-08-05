@@ -1,7 +1,6 @@
 package io.kestra.plugin.docker.model;
 
 import java.net.URI;
-import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -38,12 +37,12 @@ import lombok.experimental.SuperBuilder;
 
                 tasks:
                   - id: list_models
-                    type: io.kestra.plugin.docker.model.ListModels
+                    type: io.kestra.plugin.docker.model.List
                 """
         )
     }
 )
-public class ListModels extends AbstractModel implements RunnableTask<ListModels.Output> {
+public class List extends AbstractModel implements RunnableTask<List.Output> {
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
@@ -63,9 +62,9 @@ public class ListModels extends AbstractModel implements RunnableTask<ListModels
             );
         }
 
-        List<ModelInfo> models;
+        java.util.List<ModelInfo> models;
         try {
-            models = List.of(MAPPER.readValue(rBody, ModelInfo[].class));
+            models = java.util.List.of(MAPPER.readValue(rBody, ModelInfo[].class));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException(
                 "Failed to parse Docker Model Runner's response for GET " + rHost + "/models: " + e.getOriginalMessage(), e
@@ -81,12 +80,12 @@ public class ListModels extends AbstractModel implements RunnableTask<ListModels
     public record ModelInfo(
         @Schema(
             title = "Content digest",
-            description = "Content-addressable identifier of the model, e.g. `sha256:...`. This is not a human-readable name — see `tags`."
+            description = "Content-addressable identifier of the model, e.g. `sha256:...`. This is not a human-readable name, see `tags`."
         ) String id,
         @Schema(
             title = "Tags",
             description = "Human-readable references pointing at this model, e.g. `docker.io/ai/nomic-embed-text-v1.5:latest`."
-        ) List<String> tags,
+        ) java.util.List<String> tags,
         @Schema(title = "Creation timestamp", description = "Unix epoch seconds at which the model was created.") Long created,
         @Schema(title = "Model configuration") Config config
     ) {}
@@ -103,9 +102,9 @@ public class ListModels extends AbstractModel implements RunnableTask<ListModels
 
     @Builder
     @Getter
-    @Schema(title = "Output of the ListModels task")
+    @Schema(title = "Output of the List task")
     public static class Output implements io.kestra.core.models.tasks.Output {
         @Schema(title = "Models available in Docker Model Runner")
-        private final List<ModelInfo> models;
+        private final java.util.List<ModelInfo> models;
     }
 }

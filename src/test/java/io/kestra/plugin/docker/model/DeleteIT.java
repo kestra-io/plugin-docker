@@ -45,9 +45,9 @@ class DeleteIT {
             .build();
         deleteTask.run(TestsUtils.mockRunContext(runContextFactory, deleteTask, Map.of()));
 
-        var listTask = ListModels.builder()
+        var listTask = List.builder()
             .id("delete-it-list-" + UUID.randomUUID())
-            .type(ListModels.class.getName())
+            .type(List.class.getName())
             .build();
         var output = listTask.run(TestsUtils.mockRunContext(runContextFactory, listTask, Map.of()));
 

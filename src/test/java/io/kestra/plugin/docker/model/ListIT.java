@@ -19,16 +19,16 @@ import static org.hamcrest.Matchers.*;
  */
 @KestraTest
 @DockerModelRunnerTest
-class ListModelsIT {
+class ListIT {
 
     @Inject
     RunContextFactory runContextFactory;
 
     @Test
     void listModels() throws Exception {
-        var task = ListModels.builder()
+        var task = List.builder()
             .id("list-models-it")
-            .type(ListModels.class.getName())
+            .type(List.class.getName())
             .build();
 
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
