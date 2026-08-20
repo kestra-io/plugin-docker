@@ -1,4 +1,5 @@
 @PluginSubGroup(
+    title = "Docker Model Runner",
     description = "This subgroup of plugins contains tasks for managing models with the Docker Model Runner (DMR).",
     categories = { PluginSubGroup.PluginCategory.AI, PluginSubGroup.PluginCategory.INFRASTRUCTURE }
 )

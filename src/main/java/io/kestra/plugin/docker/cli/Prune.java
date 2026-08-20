@@ -63,13 +63,13 @@ public class Prune extends AbstractDocker implements RunnableTask<VoidOutput> {
 
     @Schema(
         title = "Until filter",
-        description = "For CONTAINERS and IMAGES: prune items created before this timestamp or duration (e.g., 10m, 1h30m) using daemon time."
+        description = "For CONTAINERS, IMAGES, and NETWORKS: prune items created before this timestamp or duration (e.g., 10m, 1h30m) using daemon time."
     )
     Property<String> until;
 
     @Schema(
         title = "Label filters",
-        description = "Optional labels to filter containers before pruning."
+        description = "Optional labels used to filter the resources being pruned; applies to whichever `pruneType` is selected."
     )
     Property<List<String>> labelFilters;
 

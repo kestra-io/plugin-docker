@@ -1,5 +1,6 @@
 @PluginSubGroup(
-    description = "This subgroup of plugins contains tasks for interacting with the Docker API.",
+    title = "Docker CLI",
+    description = "Docker tasks for building images, running containers, and managing artifacts from Kestra workflows.",
     categories = { PluginSubGroup.PluginCategory.CORE, PluginSubGroup.PluginCategory.INFRASTRUCTURE }
 )
 package io.kestra.plugin.docker.cli;

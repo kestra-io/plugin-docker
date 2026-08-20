@@ -105,7 +105,7 @@ public class ImageLs extends AbstractDocker implements RunnableTask<ImageLs.Outp
 
     @Schema(
         title = "Filter images by name or reference",
-        description = "Only images whose repository or tag contains this string are returned. Accepts partial names such as `alpine` or full references such as `alpine:3.18`."
+        description = "Applies Docker's `reference` filter: only images matching this reference pattern are returned. Accepts a repository name such as `alpine` (matches any tag of that repository), a full reference such as `alpine:3.18`, or a wildcard pattern such as `alp*`. This is pattern matching, not an arbitrary substring match."
     )
     @PluginProperty(group = "processing")
     private Property<String> imageNameFilter;

@@ -34,7 +34,7 @@ import io.kestra.core.models.annotations.PluginProperty;
                 namespace: company.team
 
                 tasks:
-                  - id: run
+                  - id: stop
                     type: io.kestra.plugin.docker.cli.Stop
                     containerId: 8088357a1974
                     kill: true
