@@ -59,7 +59,8 @@ public abstract class AbstractDocker extends Task {
         return host;
     }
     @Schema(
-        title = "The URI of your Docker host e.g. localhost"
+        title = "Docker host or URI",
+        description = "The Docker daemon to connect to, e.g. `tcp://localhost:2375` or a Unix socket path. Defaults to the daemon available to the task runner."
     )
     @PluginProperty(group = "connection")
     protected Property<String> host;

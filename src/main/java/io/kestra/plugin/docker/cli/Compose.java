@@ -89,14 +89,14 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
 
     @Schema(
         title = "Compose file",
-        description = "Inline YAML, relative path in the working directory, or a `kestra://` URI; inline content is written to a temp file before execution."
+        description = "Inline YAML, relative path in the working directory, or a `kestra://` URI; inline content is written to a temp file before execution. Ignored when `composeFiles` is set."
     )
     @PluginProperty(internalStorageURI = true, group = "source")
     private Property<String> composeFile;
 
     @Schema(
         title = "Compose files",
-        description = "Optional list passed in order with repeated `-f` flags; supports inline, relative paths, or `kestra://` URIs."
+        description = "Optional list passed in order with repeated `-f` flags; supports inline, relative paths, or `kestra://` URIs. Takes precedence over `composeFile` when both are set."
     )
     @PluginProperty(internalStorageURI = true, group = "source")
     private Property<List<String>> composeFiles;

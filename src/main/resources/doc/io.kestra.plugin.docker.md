@@ -12,9 +12,9 @@ For private registries, set `credentials.registry`, `credentials.username`, and 
 
 `Run` is the primary task — it starts a container from an image, streams stdout as task output, and waits for exit. Use it when you need to execute a containerized tool or process as a step in a flow.
 
-For CI/CD automation, `Build` builds an image from a Dockerfile, `Tag` applies additional tags, and `Push` uploads an image to a registry. `Pull` pre-fetches an image explicitly. `Compose` runs a multi-container stack from a `docker-compose.yml` file and is useful for integration testing or spinning up dependent services. `Stop` and `Rm` manage container lifecycle; `Prune` cleans up unused resources.
+For CI/CD automation, `Build` builds an image from a Dockerfile, `Tag` applies additional tags, and `Push` uploads an image to a registry. `Pull` pre-fetches an image explicitly. `Compose` runs a multi-container stack from a `docker-compose.yml` file and is useful for integration testing or spinning up dependent services. `ImageLs` lists the images available on the host. `Stop` and `Rm` manage container lifecycle; `Prune` cleans up unused resources.
 
-If your goal is running a script inside a container as part of a flow, use a [Docker task runner](https://kestra.io/docs/workflow-components/task-runners) on a script task rather than the Docker plugin — the plugin is intended for managing Docker artifacts and infrastructure, not for script execution isolation.
+If your goal is running a script inside a container as part of a flow, use a [Docker task runner](https://kestra.io/docs/task-runners) on a script task rather than the Docker plugin — the plugin is intended for managing Docker artifacts and infrastructure, not for script execution isolation.
 
 ## Docker Model Runner
 

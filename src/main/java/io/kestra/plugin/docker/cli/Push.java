@@ -5,7 +5,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Metric;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.VoidOutput;
@@ -73,6 +75,14 @@ import io.kestra.core.models.annotations.PluginProperty;
                       username: "{{ secret('REGISTRY_USERNAME') }}"
                       password: "{{ secret('REGISTRY_PASSWORD') }}"
                 """
+        )
+    },
+    metrics = {
+        @Metric(
+            name = "bytes",
+            type = Counter.TYPE,
+            unit = "bytes",
+            description = "Total bytes pushed to the container registry"
         )
     }
 )
