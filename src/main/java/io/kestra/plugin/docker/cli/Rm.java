@@ -64,7 +64,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 public class Rm extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
         title = "Container IDs or names",
-        description = "List of container IDs, ID prefixes, or names to remove. For example: `8088357a1974`, `8088`, or `my-app`."
+        description = "List of container IDs, ID prefixes, or names to remove. For example: `8088357a1974`, `8088`, or `my-app`. Provide at least one of `containerIds` or `imageIds`."
     )
     @PluginProperty(group = "connection")
     protected Property<List<String>> containerIds;

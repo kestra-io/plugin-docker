@@ -63,7 +63,7 @@ import io.kestra.core.models.annotations.PluginProperty;
                     labels:
                       unit-test: "true"
                     credentials:
-                      registry: <registry.url.com>
+                      registry: registry.example.com
                       username: "{{ secret('DOCKERHUB_USERNAME') }}"
                       password: "{{ secret('DOCKERHUB_PASSWORD') }}"
                 """
@@ -156,7 +156,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 public class Build extends AbstractDocker implements RunnableTask<Build.Output>, NamespaceFilesInterface, InputFilesInterface {
     @Schema(
         title = "Dockerfile content or path",
-        description = "Inline Dockerfile text, a relative path in the working directory, or a Kestra URI; inline content is stored as a temp file before build."
+        description = "Inline Dockerfile text, a relative path in the working directory, or a Kestra URI; inline content is stored as a temp file before build. Required."
     )
     @PluginProperty(group = "source")
     private Property<String> dockerfile;
