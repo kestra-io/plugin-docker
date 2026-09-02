@@ -9,7 +9,7 @@ namespace: sanitychecks.plugin-docker
 
 labels:
   dependencies.plugins: "[flow.Parallel], [flow.WorkingDirectory], [execution.Assert]"
-  dependencies.features: "[sla], [variables], [pluginDefaults]"
+  dependencies.features: "[sla], [variables]"
 
 variables:
   testFileContent: |
@@ -25,14 +25,6 @@ sla:
     type: MAX_DURATION
     duration: PT110S
     behavior: FAIL
-
-pluginDefaults:
-  - forced: false
-    type: io.kestra.plugin.docker.cli.Run
-    values:
-      containerImage: alpine:latest
-      entryPoint: ["/bin/sh", "-c"]
-      pullPolicy: IF_NOT_PRESENT
 
 tasks:
   - id: concurrentTesting
@@ -56,11 +48,17 @@ tasks:
 
       - id: makeVarsOutput
         type: io.kestra.plugin.docker.cli.Run
+        containerImage: alpine:latest
+        entryPoint: ["/bin/sh", "-c"]
+        pullPolicy: IF_NOT_PRESENT
         commands:
           - echo '::{"outputs":{"test":"value","int":2,"bool":true,"float":3.65}}::'
 
       - id: testCpuMemoryConsumption
         type: io.kestra.plugin.docker.cli.Run
+        containerImage: alpine:latest
+        entryPoint: ["/bin/sh", "-c"]
+        pullPolicy: IF_NOT_PRESENT
         wait: true
         cpu:
           # # Should be possible to use a floating number but the cpu property is cast to a long which prevents us to do so
@@ -97,6 +95,9 @@ tasks:
 
       - id: testUserPrivileged
         type: io.kestra.plugin.docker.cli.Run
+        containerImage: alpine:latest
+        entryPoint: ["/bin/sh", "-c"]
+        pullPolicy: IF_NOT_PRESENT
         allowFailure: true
         inputFiles:
           whoami.txt: "not privileged"
@@ -114,6 +115,9 @@ tasks:
         tasks:
           - id: testVolumes
             type: io.kestra.plugin.docker.cli.Run
+            containerImage: alpine:latest
+            entryPoint: ["/bin/sh", "-c"]
+            pullPolicy: IF_NOT_PRESENT
             commands:
               - cat someDir/someDummyFile.txt > someDir/someOtherFile.txt
             volumes:
@@ -123,6 +127,8 @@ tasks:
 
       - id: testPullPolicy
         type: io.kestra.plugin.docker.cli.Run
+        containerImage: alpine:latest
+        entryPoint: ["/bin/sh", "-c"]
         pullPolicy: IF_NOT_PRESENT
         wait: "{{ true }}"
         commands:
@@ -130,12 +136,18 @@ tasks:
 
       - id: testWait
         type: io.kestra.plugin.docker.cli.Run
+        containerImage: alpine:latest
+        entryPoint: ["/bin/sh", "-c"]
+        pullPolicy: IF_NOT_PRESENT
         wait: false
         commands:
           - sleep 120
 
       - id: testExtraHostsNetworkMode
         type: io.kestra.plugin.docker.cli.Run
+        containerImage: alpine:latest
+        entryPoint: ["/bin/sh", "-c"]
+        pullPolicy: IF_NOT_PRESENT
         commands:
           - cat /etc/hosts > hosts.txt
         #host: "{{ 'localhost' }}"
