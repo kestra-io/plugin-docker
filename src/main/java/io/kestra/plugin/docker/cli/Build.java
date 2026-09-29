@@ -158,6 +158,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
         title = "Dockerfile content or path",
         description = "Inline Dockerfile text, a relative path in the working directory, or a Kestra URI; inline content is stored as a temp file before build. Required."
     )
+    @NotNull
     @PluginProperty(group = "source")
     private Property<String> dockerfile;
 

@@ -60,6 +60,7 @@ public class Stop extends AbstractDocker implements RunnableTask<VoidOutput> {
         title = "Container ID or name",
         description = "ID, ID prefix, or name of the container to stop or kill. For example: `8088357a1974`, `8088`, or `my-app`."
     )
+    @NotNull
     @PluginProperty(group = "connection")
     private Property<String> containerId;
 
