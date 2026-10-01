@@ -22,6 +22,7 @@ import io.kestra.core.utils.Rethrow;
 import io.kestra.plugin.scripts.runner.docker.DockerService;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -158,6 +159,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
         title = "Dockerfile content or path",
         description = "Inline Dockerfile text, a relative path in the working directory, or a Kestra URI; inline content is stored as a temp file before build. Required."
     )
+    @NotNull
     @PluginProperty(group = "source")
     private Property<String> dockerfile;
 
@@ -190,7 +192,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
     )
     @NotNull
     @PluginProperty(group = "main")
-    private Property<List<String>> tags;
+    private Property<@NotEmpty List<String>> tags;
 
     @Schema(
         title = "Build arguments",

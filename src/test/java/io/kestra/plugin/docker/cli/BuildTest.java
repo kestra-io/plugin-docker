@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -11,19 +12,24 @@ import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 @KestraTest
 class BuildTest {
     @Inject
     RunContextFactory runContextFactory;
+
+    @Inject
+    ModelValidator modelValidator;
 
     @Test
     void inline() throws Exception {
@@ -94,5 +100,45 @@ class BuildTest {
 
         Build.Output run = task.run(runContext);
         assertThat(run.getImageId(), notNullValue());
+    }
+
+    @Test
+    void shouldFailValidationWhenMissingDockerfile() {
+        Build task = Build.builder()
+            .id("unit-test")
+            .type(Build.class.getName())
+            .tags(Property.ofValue(List.of("unit-test")))
+            .build();
+
+        Optional<ConstraintViolationException> violations = modelValidator.isValid(task);
+        assertThat(violations.isPresent(), is(true));
+        assertThat(violations.get().getConstraintViolations().stream().anyMatch(v -> v.getPropertyPath().toString().equals("dockerfile")), is(true));
+    }
+
+    @Test
+    void shouldFailValidationWhenEmptyTags() {
+        Build task = Build.builder()
+            .id("unit-test")
+            .type(Build.class.getName())
+            .dockerfile(Property.ofValue("FROM ubuntu"))
+            .tags(Property.ofValue(List.of()))
+            .build();
+
+        Optional<ConstraintViolationException> violations = modelValidator.isValid(task);
+        assertThat(violations.isPresent(), is(true));
+        assertThat(violations.get().getConstraintViolations().stream().anyMatch(v -> v.getPropertyPath().toString().contains("tags")), is(true));
+    }
+
+    @Test
+    void shouldFailValidationWhenNullTags() {
+        Build task = Build.builder()
+            .id("unit-test")
+            .type(Build.class.getName())
+            .dockerfile(Property.ofValue("FROM ubuntu"))
+            .build();
+
+        Optional<ConstraintViolationException> violations = modelValidator.isValid(task);
+        assertThat(violations.isPresent(), is(true));
+        assertThat(violations.get().getConstraintViolations().stream().anyMatch(v -> v.getPropertyPath().toString().equals("tags")), is(true));
     }
 }
