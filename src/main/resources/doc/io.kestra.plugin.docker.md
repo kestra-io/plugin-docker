@@ -16,6 +16,45 @@ For CI/CD automation, `Build` builds an image from a Dockerfile, `Tag` applies a
 
 If your goal is running a script inside a container as part of a flow, use a [Docker task runner](https://kestra.io/docs/task-runners) on a script task rather than the Docker plugin — the plugin is intended for managing Docker artifacts and infrastructure, not for script execution isolation.
 
+## Docker Agent
+
+The `io.kestra.plugin.docker.cli.Agent` task runs a Docker Agent team in headless mode from a Kestra flow.
+
+### Configuration
+
+- `agentConfig` is required and accepts inline YAML, a relative path in the task working directory, or a `kestra://` URI.
+- `prompt` is optional. When provided, the task sends it to Docker Agent through standard input, which also supports multiline prompts without putting the prompt text into the shell command.
+- `containerImage` defaults to Docker's `docker/docker-agent:1.145.0` image.
+- Provider API keys belong in the inherited `env` property, for example `OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"`.
+
+Docker Agent's headless `--exec` mode is intended for scripts and CI and exits when the run completes. Its `--json` option produces an NDJSON event stream, but the task does not parse that stream into a custom answer output; `ScriptOutput` remains the task output contract.
+
+The default image contains the standalone `/docker-agent` binary, so the task invokes `/docker-agent run --exec`. If you provide a custom `containerImage`, it must expose Docker Agent at `/docker-agent`.
+
+### Example
+
+```yaml
+id: docker_agent_review
+namespace: company.team
+
+tasks:
+  - id: review
+    type: io.kestra.plugin.docker.cli.Agent
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+    env:
+      OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
+    prompt: "Review the release notes and list breaking changes."
+    agentConfig: |
+      agents:
+        root:
+          model: openai/gpt-5
+          description: Release notes reviewer
+          instruction: You review release notes for breaking changes.
+```
+
+Docker Agent provider credentials should be supplied through `env` and secrets rather than embedded in the agent configuration.
+
 ## Docker Model Runner
 
 The `io.kestra.plugin.docker.model` subpackage manages AI models through the Docker Model Runner (DMR) REST API, rather than through the Docker daemon. `host` on these tasks is a completely different setting from `AbstractDocker.host` above: it is DMR's own REST endpoint (defaults to `http://localhost:12434`), not a Docker daemon socket or TCP address, and it has no equivalent authentication mechanism, and DMR does not require credentials.
