@@ -13,7 +13,7 @@
   <a href="https://github.com/kestra-io/kestra/blob/develop/LICENSE"><img src="https://img.shields.io/github/license/kestra-io/kestra?color=blueviolet" alt="License" /></a>
   <a href="https://github.com/kestra-io/kestra/stargazers"><img src="https://img.shields.io/github/stars/kestra-io/kestra?color=blueviolet&logo=github" alt="Github star" /></a> <br>
 <a href="https://kestra.io"><img src="https://img.shields.io/badge/Website-kestra.io-192A4E?color=blueviolet" alt="Kestra infinitely scalable orchestration and scheduling platform"></a>
-<a href="https://kestra.io/slack"><img src="https://img.shields.io/badge/Slack-Join%20Community-blueviolet?logo=github" alt="Kestra community Slack"></a>
+<a href="https://kestra.io/slack"><img src="https://img.shields.io/badge/Slack-Join%20Community-blueviolet?logo=slack" alt="Slack"></a>
 </div>
 
 <br />
@@ -33,6 +33,7 @@
         <img src="https://kestra.io/startvideo.png" alt="Get started in 4 minutes with Kestra" width="640px" />
     </a>
 </p>
+<p align="center" style="color:grey;"><i>Get started with Kestra in 4 minutes.</i></p>
 
 # Kestra Docker Plugin
 
@@ -45,26 +46,26 @@
 ## What
 
 - Provides plugin components under `io.kestra.plugin.docker`.
-- Includes CLI tasks such as `Build`, `Compose`, `Run`, and `Agent`.
+- Includes classes such as `PushResponseItemCallback`, `Build`, `Compose`, `Run`, and `Agent`.
 - Includes Docker Model Runner tasks under `io.kestra.plugin.docker.model`.
 
 ### Docker Agent
 
 `io.kestra.plugin.docker.cli.Agent` runs Docker Agent in non-interactive mode from a Kestra flow. The task accepts an inline configuration, a relative working-directory path, or a `kestra://` URI and passes provider credentials through the inherited `env` property.
 
-The default execution image is Docker's `docker/docker-agent` image. The task invokes its standalone `/docker-agent` binary with `run --exec`; prompts are passed through standard input rather than interpolated into the shell command.
+The default execution image is Docker's `docker/docker-agent:1.145.0` image. The task invokes its standalone `/docker-agent` binary with `run --exec`; prompts are passed through standard input rather than interpolated into the shell command.
 
 ## Documentation
-
 * Full documentation can be found under: [kestra.io/docs](https://kestra.io/docs)
 * Documentation for developing a plugin is included in the [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/)
 
-## License
 
+## License
 Apache 2.0 © [Kestra Technologies](https://kestra.io)
+
 
 ## Stay up to date
 
-We release new versions every month. Give the [main repository](https://github.com/kestra-io/kestra) a star to stay up to date with the latest releases and get notified about the latest releases.
+We release new versions every month. Give the [main repository](https://github.com/kestra-io/kestra) a star to stay up to date with the latest releases and get notified about future updates.
 
-![Star the main repository](https://kestra.io/star.gif)
+![Star the repo](https://kestra.io/star.gif)
