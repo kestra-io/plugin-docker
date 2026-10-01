@@ -278,6 +278,9 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
             buildImageCmd.withTags(tags);
 
             var renderedArgs = runContext.render(this.buildArgs).asMap(String.class, String.class);
+            if (!renderedPlatforms.isEmpty()) {
+                addPlatformBuildArgs(renderedArgs, renderedPlatforms.getLast());
+            }
             if (!renderedArgs.isEmpty()) {
                 renderedArgs.forEach(buildImageCmd::withBuildArg);
             }
@@ -309,6 +312,19 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
             return Output.builder()
                 .imageId(imageId)
                 .build();
+        }
+    }
+
+    private static void addPlatformBuildArgs(Map<String, String> buildArgs, String platform) {
+        String[] parts = platform.split("/");
+        if (parts.length < 2 || parts.length > 3) {
+            return;
+        }
+
+        buildArgs.putIfAbsent("TARGETOS", parts[0]);
+        buildArgs.putIfAbsent("TARGETARCH", parts[1]);
+        if (parts.length == 3) {
+            buildArgs.putIfAbsent("TARGETVARIANT", parts[2]);
         }
     }
 
