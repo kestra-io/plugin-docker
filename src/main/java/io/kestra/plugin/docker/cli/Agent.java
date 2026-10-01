@@ -98,7 +98,7 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
         String renderedPrompt = runContext.render(this.prompt).as(String.class).orElse(null);
 
         List<String> command = new ArrayList<>();
-        command.add("docker-agent");
+        command.add("/docker-agent");
         command.add("run");
         command.add("--exec");
         command.add(shellQuote(configPath.toString()));
