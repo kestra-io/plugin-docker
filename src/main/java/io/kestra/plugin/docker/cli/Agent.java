@@ -38,8 +38,8 @@ import lombok.experimental.SuperBuilder;
     description = """
         Runs Docker Agent in non-interactive mode through the configured task runner.
         The agent configuration can be provided inline, as a relative path in the working
-        directory, or as a \`kestra://\` URI. Provider credentials should be supplied through
-        the inherited \`env\` property.
+        directory, or as a `kestra://` URI. Provider credentials should be supplied through
+        the inherited `env` property.
         """
 )
 @Plugin(
@@ -75,7 +75,11 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
 
     @Schema(
         title = "Docker Agent configuration",
-        description = "Inline YAML, a relative path in the working directory, or a \`kestra://\` URI. Inline content and internal-storage files are materialized into the task working directory before execution."
+        description = """
+            Inline YAML, a relative path in the working directory, or a `kestra://` URI.
+            Inline content and internal-storage files are materialized into the task working
+            directory before execution.
+            """
     )
     @NotNull
     @PluginProperty(internalStorageURI = true, group = "main")
@@ -141,7 +145,7 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
         Path candidate = Path.of(renderedConfig);
         if (!candidate.isAbsolute()) {
             Path relativePath = workingDir.resolve(candidate);
-            if (Files.exists(relativePath)) {
+            if (Files.isRegularFile(relativePath)) {
                 return relativePath;
             }
         }
