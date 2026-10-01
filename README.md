@@ -30,7 +30,7 @@
 <br />
 <p align="center">
     <a href="https://go.kestra.io/video/product-overview" target="_blank">
-        <img src="https://kestra.io/startvideo.png" alt="Get started with Kestra" width="640px" />
+        <img src="https://kestra.io/startvideo.png" alt="Get started in 4 minutes with Kestra" width="640px" />
     </a>
 </p>
 
@@ -65,6 +65,6 @@ Apache 2.0 © [Kestra Technologies](https://kestra.io)
 
 ## Stay up to date
 
-We release new versions every month. Give the [main repository](https://github.com/kestra-io/kestra) a star to stay up to date with the latest releases and get notified about new updates.
+We release new versions every month. Give the [main repository](https://github.com/kestra-io/kestra) a star to stay up to date with the latest releases and get notified about the latest releases.
 
 ![Star the main repository](https://kestra.io/star.gif)
