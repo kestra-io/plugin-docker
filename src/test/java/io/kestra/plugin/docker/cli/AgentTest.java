@@ -1,5 +1,6 @@
 package io.kestra.plugin.docker.cli;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,6 +65,87 @@ class AgentTest {
     }
 
     @Test
+    void runsConfigFromRelativePath() throws Exception {
+        String config = """
+            agents:
+              root:
+                model: test/model
+                description: Relative path agent
+                instruction: Respond with a test result.
+            """;
+
+        var task = Agent.builder()
+            .id("agent")
+            .type(Agent.class.getName())
+            .agentConfig(Property.ofValue("agent's.yaml"))
+            .prompt(Property.ofValue("relative prompt"))
+            .taskRunner(Process.instance())
+            .env(Property.ofValue(testEnvironment()))
+            .build();
+
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+        Files.writeString(runContext.workingDir().path().resolve("agent's.yaml"), config);
+        installFakeAgent();
+
+        var output = task.run(runContext);
+
+        assertThat(output.getExitCode(), is(0));
+        assertThat(Files.readString(captureConfigPath(), StandardCharsets.UTF_8), is(config));
+        assertThat(Files.readString(capturePromptPath(), StandardCharsets.UTF_8), is("relative prompt"));
+    }
+
+    @Test
+    void runsConfigFromInternalStorage() throws Exception {
+        String config = """
+            agents:
+              root:
+                model: test/model
+                description: Stored agent
+                instruction: Respond with a test result.
+            """;
+
+        var storageContext = runContextFactory.of();
+        Path source = storageContext.workingDir().createTempFile(
+            config.getBytes(StandardCharsets.UTF_8),
+            ".yaml"
+        );
+        URI uri = storageContext.storage().putFile(source.toFile());
+
+        var task = Agent.builder()
+            .id("agent")
+            .type(Agent.class.getName())
+            .agentConfig(Property.ofValue(uri.toString()))
+            .prompt(Property.ofValue("stored prompt"))
+            .taskRunner(Process.instance())
+            .env(Property.ofValue(testEnvironment()))
+            .build();
+
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+        installFakeAgent();
+
+        var output = task.run(runContext);
+
+        assertThat(output.getExitCode(), is(0));
+        assertThat(Files.readString(captureConfigPath(), StandardCharsets.UTF_8), is(config));
+        assertThat(Files.readString(capturePromptPath(), StandardCharsets.UTF_8), is("stored prompt"));
+    }
+
+    @Test
+    void rejectsEmptyConfig() {
+        var task = Agent.builder()
+            .id("agent")
+            .type(Agent.class.getName())
+            .agentConfig(Property.ofValue("  "))
+            .taskRunner(Process.instance())
+            .env(Property.ofValue(testEnvironment()))
+            .build();
+
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+        assertThrows(IllegalArgumentException.class, () -> task.run(runContext));
+    }
+
+    @Test
     void failsWhenAgentProcessReturnsNonZero() throws Exception {
         var env = testEnvironment();
         env.put("FAKE_AGENT_FAIL", "true");
@@ -111,7 +193,7 @@ class AgentTest {
             test "$2" = "--exec"
             test -f "$3"
             cat "$3" > "$FAKE_CONFIG_OUTPUT"
-            if [ "$4" = "-" ]; then
+            if [ "$#" -ge 4 ] && [ "$4" = "-" ]; then
               cat > "$FAKE_PROMPT_OUTPUT"
             fi
             printf 'agent result\\n'
