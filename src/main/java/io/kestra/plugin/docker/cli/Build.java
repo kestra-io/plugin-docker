@@ -158,6 +158,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
         title = "Dockerfile content or path",
         description = "Inline Dockerfile text, a relative path in the working directory, or a Kestra URI; inline content is stored as a temp file before build. Required."
     )
+    @NotNull
     @PluginProperty(group = "source")
     private Property<String> dockerfile;
 
@@ -221,7 +222,10 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        List<String> renderedTags = runContext.render(this.tags).asList(String.class).isEmpty() ? new ArrayList<>() : runContext.render(this.tags).asList(String.class);
+        List<String> renderedTags = runContext.render(this.tags).asList(String.class);
+        if (renderedTags.isEmpty()) {
+            throw new IllegalArgumentException("At least one tag is required");
+        }
         Set<String> tags = renderedTags.stream().map(this::removeScheme).collect(Collectors.toSet());
 
         if (this.namespaceFiles != null && Boolean.TRUE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {

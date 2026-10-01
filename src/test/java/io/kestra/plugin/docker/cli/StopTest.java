@@ -1,11 +1,14 @@
 package io.kestra.plugin.docker.cli;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.TestsUtils;
@@ -13,6 +16,7 @@ import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.plugin.scripts.runner.docker.Docker;
 
 import jakarta.inject.Inject;
+import jakarta.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -22,6 +26,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class StopTest extends AbstractDockerHelper {
     @Inject
     RunContextFactory runContextFactory;
+
+    @Inject
+    ModelValidator modelValidator;
 
     @Test
     void stopByContainerIdPrefix() throws Exception {
@@ -92,5 +99,17 @@ class StopTest extends AbstractDockerHelper {
         Exception exception = assertThrows(Exception.class, () -> stop.run(stopRunContext));
 
         assertThat(exception, notNullValue());
+    }
+
+    @Test
+    void shouldFailValidationWhenMissingContainerId() {
+        Stop task = Stop.builder()
+            .id("stop")
+            .type(Stop.class.getName())
+            .build();
+
+        Optional<ConstraintViolationException> violations = modelValidator.isValid(task);
+        assertThat(violations.isPresent(), is(true));
+        assertThat(violations.get().getConstraintViolations().stream().anyMatch(v -> v.getPropertyPath().toString().equals("containerId")), is(true));
     }
 }
