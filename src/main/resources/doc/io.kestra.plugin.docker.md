@@ -29,7 +29,7 @@ The `io.kestra.plugin.docker.cli.Agent` task runs a Docker Agent team in headles
 
 Docker Agent's headless `--exec` mode is intended for scripts and CI and exits when the run completes. Its `--json` option produces an NDJSON event stream, but the task does not parse that stream into a custom answer output; `ScriptOutput` remains the task output contract.
 
-The default image contains the standalone `/docker-agent` binary, so the task invokes `/docker-agent run --exec`. If you provide a custom `containerImage`, it must expose Docker Agent at `/docker-agent`.
+The default image contains the standalone `/docker-agent` binary. The task resolves `docker-agent` through a controlled `PATH` that includes `/`, so custom `containerImage` values can instead expose `docker-agent` through their normal `PATH`.
 
 ### Example
 
