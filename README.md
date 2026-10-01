@@ -53,7 +53,7 @@
 
 `io.kestra.plugin.docker.cli.Agent` runs Docker Agent in non-interactive mode from a Kestra flow. The task accepts an inline configuration, a relative working-directory path, or a `kestra://` URI and passes provider credentials through the inherited `env` property.
 
-The default execution image is Docker's `docker/docker-agent:1.145.0` image. The task invokes its standalone `/docker-agent` binary with `run --exec`; prompts are passed through standard input rather than interpolated into the shell command.
+The default execution image is Docker's `docker/docker-agent:1.145.0` image. The task runs Docker Agent with `run --exec`; prompts are passed through standard input rather than interpolated into the shell command.
 
 ## Documentation
 * Full documentation can be found under: [kestra.io/docs](https://kestra.io/docs)
