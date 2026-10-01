@@ -315,7 +315,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
         }
     }
 
-    private static void addPlatformBuildArgs(Map<String, String> buildArgs, String platform) {
+    static void addPlatformBuildArgs(Map<String, String> buildArgs, String platform) {
         String[] parts = platform.split("/");
         if (parts.length < 2 || parts.length > 3) {
             return;
