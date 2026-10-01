@@ -13,8 +13,8 @@ import org.junit.jupiter.api.io.TempDir;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.RunnableTaskException;
 import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.runner.Process;
 
@@ -85,12 +85,13 @@ class AgentTest {
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         installFakeAgent();
 
-        assertThrows(Exception.class, () -> task.run(runContext));
+        assertThrows(RunnableTaskException.class, () -> task.run(runContext));
     }
 
     private Map<String, String> testEnvironment() {
         Map<String, String> env = new HashMap<>();
-        env.put("PATH", tempDir + java.io.File.pathSeparator + System.getenv("PATH"));
+        String path = System.getenv("PATH");
+        env.put("PATH", tempDir + java.io.File.pathSeparator + (path == null ? "" : path));
         env.put("FAKE_CONFIG_OUTPUT", captureConfigPath().toString());
         env.put("FAKE_PROMPT_OUTPUT", capturePromptPath().toString());
         return env;
@@ -103,7 +104,7 @@ class AgentTest {
             """
             #!/bin/sh
             set -eu
-            if [ "\${FAKE_AGENT_FAIL:-false}" = "true" ]; then
+            if [ "${FAKE_AGENT_FAIL:-false}" = "true" ]; then
               exit 7
             fi
             test "$1" = "run"
