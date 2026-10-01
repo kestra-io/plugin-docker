@@ -223,7 +223,6 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
     @Override
     public Output run(RunContext runContext) throws Exception {
         List<String> renderedTags = runContext.render(this.tags).asList(String.class);
-        // Checked here, not with @NotEmpty: Property values are null at flow save time, so @NotEmpty rejects every flow.
         if (renderedTags.isEmpty()) {
             throw new IllegalArgumentException("At least one tag is required");
         }
