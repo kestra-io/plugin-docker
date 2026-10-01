@@ -7,6 +7,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -55,6 +58,46 @@ class BuildTest {
 
         Build.Output run = task.run(runContext);
         assertThat(run.getImageId(), notNullValue());
+    }
+
+    @ParameterizedTest
+    @MethodSource("platformBuildArgs")
+    void shouldAddPlatformBuildArgs(String platform, Map<String, String> expected) {
+        Map<String, String> buildArgs = new java.util.HashMap<>();
+        Build.addPlatformBuildArgs(buildArgs, platform);
+
+        assertThat(buildArgs, is(expected));
+    }
+
+    static java.util.stream.Stream<Arguments> platformBuildArgs() {
+        return java.util.stream.Stream.of(
+            Arguments.of("linux/amd64", Map.of(
+                "TARGETOS", "linux",
+                "TARGETARCH", "amd64"
+            )),
+            Arguments.of("linux/arm64/v8", Map.of(
+                "TARGETOS", "linux",
+                "TARGETARCH", "arm64",
+                "TARGETVARIANT", "v8"
+            ))
+        );
+    }
+
+    @Test
+    void shouldPreserveExplicitPlatformBuildArgs() {
+        Map<String, String> buildArgs = new java.util.HashMap<>(Map.of(
+            "TARGETOS", "custom-os",
+            "TARGETARCH", "custom-arch",
+            "TARGETVARIANT", "custom-variant"
+        ));
+
+        Build.addPlatformBuildArgs(buildArgs, "linux/arm64/v8");
+
+        assertThat(buildArgs, is(Map.of(
+            "TARGETOS", "custom-os",
+            "TARGETARCH", "custom-arch",
+            "TARGETVARIANT", "custom-variant"
+        )));
     }
 
     @Test
