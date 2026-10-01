@@ -22,7 +22,6 @@ import io.kestra.core.utils.Rethrow;
 import io.kestra.plugin.scripts.runner.docker.DockerService;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -192,7 +191,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
     )
     @NotNull
     @PluginProperty(group = "main")
-    private Property<@NotEmpty List<String>> tags;
+    private Property<List<String>> tags;
 
     @Schema(
         title = "Build arguments",
@@ -223,7 +222,11 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        List<String> renderedTags = runContext.render(this.tags).asList(String.class).isEmpty() ? new ArrayList<>() : runContext.render(this.tags).asList(String.class);
+        List<String> renderedTags = runContext.render(this.tags).asList(String.class);
+        // Checked here, not with @NotEmpty: Property values are null at flow save time, so @NotEmpty rejects every flow.
+        if (renderedTags.isEmpty()) {
+            throw new IllegalArgumentException("At least one tag is required");
+        }
         Set<String> tags = renderedTags.stream().map(this::removeScheme).collect(Collectors.toSet());
 
         if (this.namespaceFiles != null && Boolean.TRUE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {

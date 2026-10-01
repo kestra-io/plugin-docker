@@ -11,10 +11,12 @@ import org.junit.jupiter.api.Test;
 import com.google.common.collect.ImmutableMap;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
+import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
@@ -22,6 +24,7 @@ import jakarta.validation.ConstraintViolationException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class BuildTest {
@@ -116,7 +119,7 @@ class BuildTest {
     }
 
     @Test
-    void shouldFailValidationWhenEmptyTags() {
+    void shouldFailAtRuntimeWhenEmptyTags() throws Exception {
         Build task = Build.builder()
             .id("unit-test")
             .type(Build.class.getName())
@@ -124,9 +127,25 @@ class BuildTest {
             .tags(Property.ofValue(List.of()))
             .build();
 
-        Optional<ConstraintViolationException> violations = modelValidator.isValid(task);
-        assertThat(violations.isPresent(), is(true));
-        assertThat(violations.get().getConstraintViolations().stream().anyMatch(v -> v.getPropertyPath().toString().contains("tags")), is(true));
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> task.run(runContext));
+        assertThat(e.getMessage(), is("At least one tag is required"));
+    }
+
+    @Test
+    void shouldPassValidationWhenParsedFromFlowYaml() {
+        Flow flow = YamlParser.parse("""
+            id: build
+            namespace: company.team
+            tasks:
+              - id: build
+                type: io.kestra.plugin.docker.cli.Build
+                dockerfile: FROM ubuntu
+                tags:
+                  - "{{ inputs.tag }}"
+            """, Flow.class);
+
+        assertThat(modelValidator.isValid(flow).isEmpty(), is(true));
     }
 
     @Test
