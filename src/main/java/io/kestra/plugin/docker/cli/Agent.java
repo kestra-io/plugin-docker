@@ -6,6 +6,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
@@ -52,11 +54,20 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
-        String renderedPrompt = runContext.render(this.prompt).as(String.class).orElse(null);
         String renderedContainerImage = runContext.render(this.containerImage).as(String.class).orElse(null);
         Path configPath = resolveAgentConfig(runContext);
+        List<String> command = buildAgentCommand(runContext, configPath);
 
         throw new UnsupportedOperationException("Docker Agent execution is not implemented yet.");
+    }
+
+    List<String> buildAgentCommand(RunContext runContext, Path configPath) throws Exception {
+        List<String> arguments = new ArrayList<>(List.of("docker", "agent", "run", "--exec", configPath.toString()));
+        String renderedPrompt = runContext.render(this.prompt).as(String.class).orElse(null);
+        if (renderedPrompt != null) {
+            arguments.add(renderedPrompt);
+        }
+        return List.copyOf(arguments);
     }
 
     Path resolveAgentConfig(RunContext runContext) throws Exception {

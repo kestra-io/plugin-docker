@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -166,5 +167,40 @@ class AgentTest {
         var exception = assertThrows(IllegalArgumentException.class, () -> task.resolveAgentConfig(runContext));
 
         assertThat(exception.getMessage(), containsString("must be relative to the working directory"));
+    }
+
+    @Test
+    void commandWithoutPromptUsesHeadlessModeAndConfigurationPath() throws Exception {
+        var task = task(CONFIG);
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+        Path configPath = task.resolveAgentConfig(runContext);
+
+        assertThat(task.buildAgentCommand(runContext, configPath), is(List.of("docker", "agent", "run", "--exec", configPath.toString())));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings = {
+            "Review the release notes.",
+            "Review 'quoted' and \"double quoted\" text.",
+            "Keep $(touch unexpected) and `commands`; $HOME literal.",
+            "First line\nSecond line",
+            ""
+        }
+    )
+    void renderedPromptRemainsOneUnmodifiedArgument(String prompt) throws Exception {
+        var task = Agent.builder()
+            .id("agent-prompt-test")
+            .type(Agent.class.getName())
+            .agentConfig(Property.ofValue(CONFIG))
+            .prompt(Property.ofExpression("{{ inputs.prompt }}"))
+            .build();
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of("prompt", prompt));
+        Path configPath = task.resolveAgentConfig(runContext);
+
+        assertThat(
+            task.buildAgentCommand(runContext, configPath),
+            is(List.of("docker", "agent", "run", "--exec", configPath.toString(), prompt))
+        );
     }
 }
