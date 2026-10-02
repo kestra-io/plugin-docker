@@ -2,8 +2,10 @@ package io.kestra.plugin.docker.cli;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
@@ -63,19 +66,21 @@ class BuildTest {
     @ParameterizedTest
     @MethodSource("platformBuildArgs")
     void shouldAddPlatformBuildArgs(String platform, Map<String, String> expected) {
-        Map<String, String> buildArgs = new java.util.HashMap<>();
+        Map<String, String> buildArgs = new HashMap<>();
         Build.addPlatformBuildArgs(buildArgs, platform);
 
         assertThat(buildArgs, is(expected));
     }
 
     static java.util.stream.Stream<Arguments> platformBuildArgs() {
-        return java.util.stream.Stream.of(
+        return Stream.of(
             Arguments.of("linux/amd64", Map.of(
+                "TARGETPLATFORM", "linux/amd64",
                 "TARGETOS", "linux",
                 "TARGETARCH", "amd64"
             )),
             Arguments.of("linux/arm64/v8", Map.of(
+                "TARGETPLATFORM", "linux/arm64/v8",
                 "TARGETOS", "linux",
                 "TARGETARCH", "arm64",
                 "TARGETVARIANT", "v8"
@@ -85,7 +90,7 @@ class BuildTest {
 
     @Test
     void shouldPreserveExplicitPlatformBuildArgs() {
-        Map<String, String> buildArgs = new java.util.HashMap<>(Map.of(
+        Map<String, String> buildArgs = new HashMap<>(Map.of(
             "TARGETOS", "custom-os",
             "TARGETARCH", "custom-arch",
             "TARGETVARIANT", "custom-variant"
@@ -98,6 +103,48 @@ class BuildTest {
             "TARGETARCH", "custom-arch",
             "TARGETVARIANT", "custom-variant"
         )));
+    }
+
+    @Test
+    void shouldExposeTargetPlatformArgsToDockerfile() throws Exception {
+        Build task = Build.builder()
+            .id("build-platform-args-" + IdUtils.create())
+            .type(Build.class.getName())
+            .platforms(Property.ofValue(List.of("linux/amd64")))
+            .tags(Property.ofValue(List.of("unit-test-platform-args")))
+            .dockerfile(Property.ofValue("""
+                    FROM alpine
+                    ARG TARGETOS
+                    ARG TARGETARCH
+                    RUN test "$TARGETOS" = linux && test "$TARGETARCH" = amd64
+                """))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());
+
+        Build.Output run = task.run(runContext);
+        assertThat(run.getImageId(), notNullValue());
+    }
+
+    @Test
+    void shouldKeepExplicitTargetArgOverPlatform() throws Exception {
+        Build task = Build.builder()
+            .id("build-platform-args-" + IdUtils.create())
+            .type(Build.class.getName())
+            .platforms(Property.ofValue(List.of("linux/amd64")))
+            .buildArgs(Property.ofValue(Map.of("TARGETARCH", "custom-arch")))
+            .tags(Property.ofValue(List.of("unit-test-platform-args-override")))
+            .dockerfile(Property.ofValue("""
+                    FROM alpine
+                    ARG TARGETARCH
+                    RUN test "$TARGETARCH" = custom-arch
+                """))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());
+
+        Build.Output run = task.run(runContext);
+        assertThat(run.getImageId(), notNullValue());
     }
 
     @Test
