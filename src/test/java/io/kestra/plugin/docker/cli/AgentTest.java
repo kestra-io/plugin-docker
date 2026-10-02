@@ -17,6 +17,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import com.github.tomakehurst.wiremock.junit5.WireMockRuntimeInfo;
@@ -98,7 +99,7 @@ class AgentTest {
     }
 
     @Test
-    void relativeFileIsCopiedWithoutChangingSource() throws Exception {
+    void relativeFileIsPassedDirectlyWithoutChangingSource() throws Exception {
         var task = task("configs/agent.yaml");
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         Path source = runContext.workingDir().resolve(Path.of("configs/agent.yaml"));
@@ -107,9 +108,8 @@ class AgentTest {
 
         Path resolved = task.resolveAgentConfig(runContext);
 
-        assertThat(resolved, not(is(source)));
-        assertThat(Files.readString(resolved), is(CONFIG));
-        Files.writeString(resolved, "changed");
+        assertThat(resolved, is(source));
+        assertThat(resolved.getParent(), is(source.getParent()));
         assertThat(Files.readString(source), is(CONFIG));
     }
 
@@ -346,9 +346,9 @@ class AgentTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { "Say hello.", "--help" })
+    @CsvSource({ "Say hello., false", "--help, false", "Say hello., true" })
     @Timeout(60)
-    void successfulExecutionReturnsScriptOutput(String prompt, WireMockRuntimeInfo wm) throws Exception {
+    void successfulExecutionReturnsScriptOutput(String prompt, boolean relativeConfig, WireMockRuntimeInfo wm) throws Exception {
         stubFor(
             post(urlEqualTo("/v1/chat/completions"))
                 .willReturn(
@@ -383,12 +383,20 @@ class AgentTest {
         var task = Agent.builder()
             .id("agent-success-test")
             .type(Agent.class.getName())
-            .agentConfig(Property.ofValue(config))
+            .agentConfig(Property.ofValue(relativeConfig ? "configs/agent.yaml" : config))
             .prompt(Property.ofValue(prompt))
             .env(Property.ofValue(Map.of("OPENAI_API_KEY", "test-api-key", "TELEMETRY_ENABLED", "false")))
             .taskRunner(dockerRunner())
             .build();
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+        if (relativeConfig) {
+            Path configPath = runContext.workingDir().resolve(Path.of("configs/agent.yaml"));
+            Path instructionPath = configPath.getParent().resolve("instructions/root.md");
+            Files.createDirectories(instructionPath.getParent());
+            Files.writeString(instructionPath, "Follow the config-relative instruction file.");
+            Files.writeString(configPath, config.replace("instruction: Answer the user's request.", "instruction_file: instructions/root.md"));
+        }
 
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         CountDownLatch answerLogged = new CountDownLatch(1);
@@ -410,6 +418,12 @@ class AgentTest {
             stopReceiving.run();
         }
 
+        if (relativeConfig) {
+            verify(
+                postRequestedFor(urlEqualTo("/v1/chat/completions"))
+                    .withRequestBody(containing("Follow the config-relative instruction file."))
+            );
+        }
         assertThat(output.getExitCode(), is(0));
         assertThat(output.getStdOutLineCount(), greaterThan(0));
         String executionLogs = String.join("\n", logs.stream().map(LogEntry::getMessage).toList());

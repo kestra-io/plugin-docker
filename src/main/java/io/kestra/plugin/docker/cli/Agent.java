@@ -39,7 +39,8 @@ import lombok.experimental.SuperBuilder;
     description = """
         Runs a Docker Agent team non-interactively using `/docker-agent run --exec` through the configured task runner.
         Supply the team configuration as inline YAML, a relative path in the task working directory, or a `kestra://` URI.
-        The configuration is copied to a temporary YAML file before execution. Pass model provider API keys through `env` using Kestra secrets.
+        Existing relative configurations are passed directly to preserve config-relative references. Inline YAML and `kestra://` configurations use temporary YAML files.
+        Pass model provider API keys through `env` using Kestra secrets.
         The default image is `docker/docker-agent:1.146.0`; custom images must provide the executable at `/docker-agent`.
         Set the Docker task runner `user` to `root` with the default image so it can read Kestra temporary files.
         Agent stdout and stderr are streamed to the execution logs. Returns `ScriptOutput`, including the exit code and configured output files.
@@ -221,8 +222,7 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
             throw new IllegalArgumentException("agentConfig file does not exist or is not a regular file: " + source);
         }
 
-        Path tempFile = workingDir.createTempFile(".yaml");
-        Files.copy(sourceFile, tempFile, StandardCopyOption.REPLACE_EXISTING);
-        return tempFile;
+        // Preserve the config directory so Docker Agent can resolve config-relative references.
+        return sourceFile;
     }
 }

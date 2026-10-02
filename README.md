@@ -54,7 +54,7 @@ Use `io.kestra.plugin.docker.cli.Agent` (also available as `io.kestra.plugin.doc
 
 For a relative path such as `configs/agent.yaml`, the workflow must make the file and its YAML content available in the task working directory before `Agent` starts. A missing file fails the task.
 
-Configurations are copied to a temporary YAML file at the working-directory root. Docker Agent resolves `instruction_file` relative to that temporary file, so references in a config originally stored in a subdirectory may break. Use inline `instruction` content for self-contained configs, or place instruction files at the referenced paths relative to the working-directory root. See the [configuration limitations](src/main/resources/doc/io.kestra.plugin.docker.md#configuration-and-execution).
+Existing relative configurations are passed directly to Docker Agent to preserve their directory and config-relative references such as `instruction_file`. For example, `configs/agent.yaml` referencing `instructions/root.md` uses `configs/instructions/root.md`. The Docker runner makes the working-directory files available in the container while preserving their directory structure. Inline YAML and `kestra://` configurations still use temporary files at the working-directory root; their referenced files must be available relative to that root. Direct-path handling intentionally departs from issue #161’s request to write every configuration to a temporary file. See the [configuration and execution details](src/main/resources/doc/io.kestra.plugin.docker.md#configuration-and-execution).
 
 ```yaml
 id: docker_agent_review
