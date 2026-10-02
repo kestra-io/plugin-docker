@@ -18,6 +18,7 @@ import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,12 +31,16 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutput> {
+    private static final String DEFAULT_IMAGE = "docker/docker-agent:1.146.0";
+
+    @Builder.Default
     @Schema(
         title = "Container image",
-        description = "Execution image containing the Docker Agent executable."
+        description = "Execution image containing the Docker Agent executable at `/docker-agent`. Custom images must provide the same executable path.",
+        defaultValue = DEFAULT_IMAGE
     )
     @PluginProperty(group = "execution")
-    protected Property<String> containerImage;
+    protected Property<String> containerImage = Property.ofValue(DEFAULT_IMAGE);
 
     @Schema(
         title = "Agent configuration",
@@ -54,15 +59,16 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
-        String renderedContainerImage = runContext.render(this.containerImage).as(String.class).orElse(null);
         Path configPath = resolveAgentConfig(runContext);
         List<String> command = buildAgentCommand(runContext, configPath);
 
-        throw new UnsupportedOperationException("Docker Agent execution is not implemented yet.");
+        return this.commands(runContext)
+            .withCommands(Property.ofValue(command))
+            .run();
     }
 
     List<String> buildAgentCommand(RunContext runContext, Path configPath) throws Exception {
-        List<String> arguments = new ArrayList<>(List.of("docker", "agent", "run", "--exec", configPath.toString()));
+        List<String> arguments = new ArrayList<>(List.of("/docker-agent", "run", "--exec", configPath.toString()));
         String renderedPrompt = runContext.render(this.prompt).as(String.class).orElse(null);
         if (renderedPrompt != null) {
             arguments.add(renderedPrompt);

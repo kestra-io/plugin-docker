@@ -175,7 +175,7 @@ class AgentTest {
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         Path configPath = task.resolveAgentConfig(runContext);
 
-        assertThat(task.buildAgentCommand(runContext, configPath), is(List.of("docker", "agent", "run", "--exec", configPath.toString())));
+        assertThat(task.buildAgentCommand(runContext, configPath), is(List.of("/docker-agent", "run", "--exec", configPath.toString())));
     }
 
     @ParameterizedTest
@@ -200,7 +200,28 @@ class AgentTest {
 
         assertThat(
             task.buildAgentCommand(runContext, configPath),
-            is(List.of("docker", "agent", "run", "--exec", configPath.toString(), prompt))
+            is(List.of("/docker-agent", "run", "--exec", configPath.toString(), prompt))
         );
+    }
+
+    @Test
+    void containerImageDefaultsToVersionedDockerAgentImage() throws Exception {
+        var task = task(CONFIG);
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+        assertThat(runContext.render(task.getContainerImage()).as(String.class).orElseThrow(), is("docker/docker-agent:1.146.0"));
+    }
+
+    @Test
+    void containerImageOverrideIsRendered() throws Exception {
+        var task = Agent.builder()
+            .id("agent-image-test")
+            .type(Agent.class.getName())
+            .agentConfig(Property.ofValue(CONFIG))
+            .containerImage(Property.ofExpression("{{ inputs.image }}"))
+            .build();
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of("image", "company/docker-agent:custom"));
+
+        assertThat(runContext.render(task.getContainerImage()).as(String.class).orElseThrow(), is("company/docker-agent:custom"));
     }
 }
