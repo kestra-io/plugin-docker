@@ -150,8 +150,9 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
 
     @Schema(
         title = "Prompt",
-        description = "Optional initial assignment passed to the agent for this execution."
+        description = "Required non-blank initial assignment for headless execution. YAML instructions define agent behavior and do not replace this message."
     )
+    @NotNull
     @PluginProperty(group = "main")
     private Property<String> prompt;
 
@@ -176,10 +177,12 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
 
     List<String> buildAgentCommand(RunContext runContext, Path configPath) throws Exception {
         List<String> arguments = new ArrayList<>(List.of("/docker-agent", "run", "--exec", configPath.toString()));
-        String renderedPrompt = runContext.render(this.prompt).as(String.class).orElse(null);
-        if (renderedPrompt != null) {
-            arguments.add(renderedPrompt);
+        String renderedPrompt = runContext.render(this.prompt).as(String.class)
+            .orElseThrow(() -> new IllegalArgumentException("prompt is required for headless execution."));
+        if (renderedPrompt.isBlank()) {
+            throw new IllegalArgumentException("prompt must not be blank for headless execution.");
         }
+        arguments.add(renderedPrompt);
         return List.copyOf(arguments);
     }
 

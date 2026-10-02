@@ -74,6 +74,7 @@ class AgentTest {
             .id("agent-test")
             .type(Agent.class.getName())
             .agentConfig(agentConfig)
+            .prompt(Property.ofValue("Say hello."))
             .build();
     }
 
@@ -197,12 +198,42 @@ class AgentTest {
     }
 
     @Test
-    void commandWithoutPromptUsesHeadlessModeAndConfigurationPath() throws Exception {
+    void commandWithPromptUsesHeadlessModeAndConfigurationPath() throws Exception {
         var task = task(CONFIG);
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         Path configPath = task.resolveAgentConfig(runContext);
 
-        assertThat(task.buildAgentCommand(runContext, configPath), is(List.of("/docker-agent", "run", "--exec", configPath.toString())));
+        assertThat(task.buildAgentCommand(runContext, configPath), is(List.of("/docker-agent", "run", "--exec", configPath.toString(), "Say hello.")));
+    }
+
+    @Test
+    void missingPromptIsRejected() throws Exception {
+        var task = Agent.builder()
+            .id("agent-missing-prompt-test")
+            .type(Agent.class.getName())
+            .agentConfig(Property.ofValue(CONFIG))
+            .build();
+
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+        var exception = assertThrows(ConstraintViolationException.class, () -> task.buildAgentCommand(runContext, Path.of("agent.yaml")));
+
+        assertThat(exception.getMessage(), containsString("prompt"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { "", " ", "\n\t" })
+    void blankRenderedPromptIsRejected(String prompt) throws Exception {
+        var task = Agent.builder()
+            .id("agent-blank-prompt-test")
+            .type(Agent.class.getName())
+            .agentConfig(Property.ofValue(CONFIG))
+            .prompt(Property.ofExpression("{{ inputs.prompt }}"))
+            .build();
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of("prompt", prompt));
+
+        var exception = assertThrows(IllegalArgumentException.class, () -> task.buildAgentCommand(runContext, Path.of("agent.yaml")));
+
+        assertThat(exception.getMessage(), is("prompt must not be blank for headless execution."));
     }
 
     @ParameterizedTest
@@ -211,8 +242,7 @@ class AgentTest {
             "Review the release notes.",
             "Review 'quoted' and \"double quoted\" text.",
             "Keep $(touch unexpected) and `commands`; $HOME literal.",
-            "First line\nSecond line",
-            ""
+            "First line\nSecond line"
         }
     )
     void renderedPromptRemainsOneUnmodifiedArgument(String prompt) throws Exception {
@@ -245,6 +275,7 @@ class AgentTest {
             .id("agent-image-test")
             .type(Agent.class.getName())
             .agentConfig(Property.ofValue(CONFIG))
+            .prompt(Property.ofValue("Say hello."))
             .containerImage(Property.ofExpression("{{ inputs.image }}"))
             .build();
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of("image", "company/docker-agent:custom"));
@@ -260,6 +291,7 @@ class AgentTest {
             .id("agent-kill-test")
             .type(Agent.class.getName())
             .agentConfig(Property.ofValue(CONFIG))
+            .prompt(Property.ofValue("Say hello."))
             .taskRunner(runner)
             .build();
 

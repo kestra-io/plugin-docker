@@ -52,6 +52,8 @@ plugin-docker/
 
 ### Testing
 
+`Agent` currently copies configurations to a temporary YAML file at the task working-directory root. Docker Agent's `instruction_file` references resolve relative to that copy, so references from configs originally stored in subdirectories may break. This limitation is documented in the README and how-to; preserving the original config directory is deferred. Relative config files must already exist before `Agent` starts.
+
 `io.kestra.plugin.docker.cli.AgentTest` covers configuration sources, rendering, command arguments, and image defaults. Its execution tests require Docker and run the pinned Docker Agent image against a local WireMock provider, without live model-provider calls. Run it with `./gradlew test --tests io.kestra.plugin.docker.cli.AgentTest`. Keep execution tests independent of live AI calls.
 
 `io.kestra.plugin.docker.model.DeleteIT`, `PullIT`, and `ListIT` are integration tests that run against a **live** Docker Model Runner and are gated behind `@DockerModelRunnerTest`, which requires both `DMR_IT_TESTS=true` and a reachable DMR at `localhost:12434`. They are skipped by default (including in CI) and are **destructive**: `PullIT` and `DeleteIT` pull and delete the real `ai/smollm2` tag on whatever DMR instance is reachable. DMR tags are not test-namespaced, so a developer running with the opt-in set and an existing `ai/smollm2` model of their own will lose it. Only set `DMR_IT_TESTS=true` against a DMR instance you don't mind losing that model on.
