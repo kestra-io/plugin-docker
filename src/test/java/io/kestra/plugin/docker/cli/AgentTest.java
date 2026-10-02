@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -42,6 +44,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -250,7 +253,7 @@ class AgentTest {
     }
 
     @Test
-    void inheritedKillReachesConfiguredRunner() {
+    void inheritedKillReachesConfiguredRunner() throws Exception {
         AtomicBoolean stopped = new AtomicBoolean();
         var runner = new CancellationProbeDocker(stopped);
         var task = Agent.builder()
@@ -260,9 +263,52 @@ class AgentTest {
             .taskRunner(runner)
             .build();
 
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+        var commands = task.commands(runContext);
+        assertThat(commands.getTaskRunner(), sameInstance(runner));
+        assertThat(task.getTaskRunner(), sameInstance(runner));
+
         task.kill();
 
         assertThat(stopped.get(), is(true));
+    }
+
+    @Test
+    @Timeout(60)
+    void inheritedKillStopsDefaultRunnerContainer() throws Exception {
+        var task = task(CONFIG);
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+        var commands = task.commands(runContext)
+            .withCommands(Property.ofValue(List.of("/bin/sh", "-c", "echo 'Agent cancellation test started'; exec sleep 120")));
+        assertThat(task.getTaskRunner(), sameInstance(commands.getTaskRunner()));
+
+        CountDownLatch started = new CountDownLatch(1);
+        Runnable stopReceiving = logQueue.receive(message ->
+        {
+            if (
+                message.isLeft() && task.getId().equals(message.getLeft().getTaskId())
+                    && message.getLeft().getMessage().equals("Agent cancellation test started")
+            ) {
+                started.countDown();
+            }
+        });
+        var executor = Executors.newSingleThreadExecutor();
+        try {
+            var execution = executor.submit(() -> commands.run());
+            assertTrue(started.await(30, TimeUnit.SECONDS), "The default runner's container should start before cancellation.");
+
+            task.kill();
+
+            var exception = assertThrows(ExecutionException.class, () -> execution.get(10, TimeUnit.SECONDS));
+            var taskException = (RunnableTaskException) exception.getCause();
+            assertThat(((TaskException) taskException.getCause()).getExitCode(), not(is(0)));
+        } finally {
+            // Also clean up the real runner if an assertion fails before task.kill().
+            commands.getTaskRunner().kill();
+            stopReceiving.run();
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(10, TimeUnit.SECONDS), "The cancelled runner should terminate.");
+        }
     }
 
     @Test

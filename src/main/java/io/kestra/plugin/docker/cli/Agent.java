@@ -9,6 +9,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -17,6 +18,7 @@ import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.scripts.exec.AbstractExecScript;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
+import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -152,6 +154,15 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
     )
     @PluginProperty(group = "main")
     private Property<String> prompt;
+
+    @Override
+    protected CommandsWrapper commands(RunContext runContext) throws IllegalVariableEvaluationException {
+        CommandsWrapper commands = super.commands(runContext);
+        // Retain the effective runner, including the default, so inherited kill() reaches it.
+        this.taskRunner = commands.getTaskRunner();
+        // Legacy Docker options have already been applied; reuse the same runner during execution.
+        return commands.withTaskRunner(this.taskRunner).withDockerOptions(null);
+    }
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
