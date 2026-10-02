@@ -203,7 +203,7 @@ class AgentTest {
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         Path configPath = task.resolveAgentConfig(runContext);
 
-        assertThat(task.buildAgentCommand(runContext, configPath), is(List.of("/docker-agent", "run", "--exec", configPath.toString(), "Say hello.")));
+        assertThat(task.buildAgentCommand(runContext, configPath), is(List.of("/docker-agent", "run", "--exec", "--", configPath.toString(), "Say hello.")));
     }
 
     @Test
@@ -242,7 +242,9 @@ class AgentTest {
             "Review the release notes.",
             "Review 'quoted' and \"double quoted\" text.",
             "Keep $(touch unexpected) and `commands`; $HOME literal.",
-            "First line\nSecond line"
+            "First line\nSecond line",
+            "--help",
+            "--exec=false"
         }
     )
     void renderedPromptRemainsOneUnmodifiedArgument(String prompt) throws Exception {
@@ -257,7 +259,7 @@ class AgentTest {
 
         assertThat(
             task.buildAgentCommand(runContext, configPath),
-            is(List.of("/docker-agent", "run", "--exec", configPath.toString(), prompt))
+            is(List.of("/docker-agent", "run", "--exec", "--", configPath.toString(), prompt))
         );
     }
 
@@ -343,9 +345,10 @@ class AgentTest {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(strings = { "Say hello.", "--help" })
     @Timeout(60)
-    void successfulExecutionReturnsScriptOutput(WireMockRuntimeInfo wm) throws Exception {
+    void successfulExecutionReturnsScriptOutput(String prompt, WireMockRuntimeInfo wm) throws Exception {
         stubFor(
             post(urlEqualTo("/v1/chat/completions"))
                 .willReturn(
@@ -381,7 +384,7 @@ class AgentTest {
             .id("agent-success-test")
             .type(Agent.class.getName())
             .agentConfig(Property.ofValue(config))
-            .prompt(Property.ofValue("Say hello."))
+            .prompt(Property.ofValue(prompt))
             .env(Property.ofValue(Map.of("OPENAI_API_KEY", "test-api-key", "TELEMETRY_ENABLED", "false")))
             .taskRunner(dockerRunner())
             .build();
@@ -414,6 +417,7 @@ class AgentTest {
         verify(
             postRequestedFor(urlEqualTo("/v1/chat/completions"))
                 .withHeader("Authorization", equalTo("Bearer test-api-key"))
+                .withRequestBody(containing(prompt))
         );
     }
 

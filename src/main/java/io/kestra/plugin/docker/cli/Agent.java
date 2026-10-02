@@ -176,7 +176,7 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
     }
 
     List<String> buildAgentCommand(RunContext runContext, Path configPath) throws Exception {
-        List<String> arguments = new ArrayList<>(List.of("/docker-agent", "run", "--exec", configPath.toString()));
+        List<String> arguments = new ArrayList<>(List.of("/docker-agent", "run", "--exec", "--", configPath.toString()));
         String renderedPrompt = runContext.render(this.prompt).as(String.class)
             .orElseThrow(() -> new IllegalArgumentException("prompt is required for headless execution."));
         if (renderedPrompt.isBlank()) {

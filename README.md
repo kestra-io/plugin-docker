@@ -50,7 +50,7 @@
 
 ## Run a Docker Agent team
 
-Use `io.kestra.plugin.docker.cli.Agent` (also available as `io.kestra.plugin.docker.Agent`) to run a [Docker Agent](https://docs.docker.com/ai/docker-agent/) team from a flow. The task accepts inline YAML, a relative configuration path in the task working directory, or a Kestra internal-storage URI. Pass a required, non-blank initial assignment through `prompt` and model provider API keys through `env` using secrets.
+Use `io.kestra.plugin.docker.cli.Agent` (also available as `io.kestra.plugin.docker.Agent`) to run a [Docker Agent](https://docs.docker.com/ai/docker-agent/) team from a flow. The task accepts inline YAML, a relative configuration path in the task working directory, or a Kestra internal-storage URI. Pass a required, non-blank initial assignment through `prompt` and model provider API keys through `env` using secrets. The task inserts the CLI option separator `--` before the config and prompt, so prompts such as `--help` are sent as text rather than parsed as flags.
 
 For a relative path such as `configs/agent.yaml`, the workflow must make the file and its YAML content available in the task working directory before `Agent` starts. A missing file fails the task.
 
