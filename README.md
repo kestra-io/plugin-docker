@@ -61,6 +61,7 @@ tasks:
     type: io.kestra.plugin.docker.cli.Agent
     taskRunner:
       type: io.kestra.plugin.scripts.runner.docker.Docker
+      user: root
     env:
       OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
     prompt: "Review these release notes for breaking changes: v2 removes the legacy /v1 API and adds CSV export."
@@ -71,7 +72,7 @@ tasks:
           instruction: You review release notes for breaking changes.
 ```
 
-The Docker task runner requires a reachable Docker daemon. The default image is `docker/docker-agent:1.146.0`; override `containerImage` to use a custom image that provides `/docker-agent`. Execution uses headless mode, streams the agent's output to Kestra logs, and returns `ScriptOutput`, including `exitCode`. Provider credentials are required for the chosen model.
+The Docker task runner requires a reachable Docker daemon. The default image is `docker/docker-agent:1.146.0`; override `containerImage` to use a custom image that provides `/docker-agent`. Execution uses headless mode, streams the agent's output to Kestra logs, and returns `ScriptOutput`, including `exitCode`. Set the Docker runner `user: root` so the image can read Kestra temporary files. Provider credentials are required for the chosen model.
 
 See the [Docker plugin how-to](src/main/resources/doc/io.kestra.plugin.docker.md#docker-agent) for uploaded configuration files, scheduling, and output behavior.
 

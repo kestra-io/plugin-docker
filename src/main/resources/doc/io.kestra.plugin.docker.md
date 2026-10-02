@@ -32,7 +32,7 @@ If your goal is running a script inside a container as part of a flow, use a [Do
 
 The task invokes `/docker-agent run --exec <temporary-config.yaml> [prompt]`. `--exec` selects headless execution; the task does not enable JSON output or extract a separate final-answer field. The pinned [Docker image](https://hub.docker.com/r/docker/docker-agent/tags) contains the standalone binary at `/docker-agent`, rather than registering `docker agent` as a CLI plugin. See the [versioned Dockerfile](https://github.com/docker/docker-agent/blob/v1.146.0/Dockerfile) and [CLI reference](https://docker.github.io/docker-agent/features/cli/).
 
-The Docker task runner requires a reachable Docker daemon and clears the image entrypoint by default so the command can run directly. Installing Docker Agent on a developer's computer does not install it inside the execution image. Keep the runner's default entrypoint when using the examples below.
+The Docker task runner requires a reachable Docker daemon and clears the image entrypoint by default so the command can run directly. Installing Docker Agent on a developer's computer does not install it inside the execution image. Keep the runner's default entrypoint when using the examples below. Set `user: root` because the image's default non-root user cannot read Kestra's temporary configuration files.
 
 A relative configuration path must refer to a regular file already present in the task working directory. Missing files fail the task; the original file is preserved. For uploaded configurations, use a `FILE` input as shown below. The configuration must declare the tools and data access needed for the assignment; the task does not grant access to incidents, repositories, or deployment records automatically.
 
@@ -47,6 +47,7 @@ tasks:
     type: io.kestra.plugin.docker.cli.Agent
     taskRunner:
       type: io.kestra.plugin.scripts.runner.docker.Docker
+      user: root
     env:
       OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
     prompt: "Review these release notes for breaking changes: v2 removes the legacy /v1 API and adds CSV export."
@@ -74,6 +75,7 @@ tasks:
     type: io.kestra.plugin.docker.cli.Agent
     taskRunner:
       type: io.kestra.plugin.scripts.runner.docker.Docker
+      user: root
     env:
       OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
     agentConfig: "{{ inputs.config }}"
@@ -100,6 +102,7 @@ tasks:
     type: io.kestra.plugin.docker.cli.Agent
     taskRunner:
       type: io.kestra.plugin.scripts.runner.docker.Docker
+      user: root
     env:
       OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
     prompt: "Create a short checklist for today's deployment review."

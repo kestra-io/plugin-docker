@@ -39,6 +39,7 @@ import lombok.experimental.SuperBuilder;
         Supply the team configuration as inline YAML, a relative path in the task working directory, or a `kestra://` URI.
         The configuration is copied to a temporary YAML file before execution. Pass model provider API keys through `env` using Kestra secrets.
         The default image is `docker/docker-agent:1.146.0`; custom images must provide the executable at `/docker-agent`.
+        Set the Docker task runner `user` to `root` with the default image so it can read Kestra temporary files.
         Agent stdout and stderr are streamed to the execution logs. Returns `ScriptOutput`, including the exit code and configured output files.
         """
 )
@@ -57,6 +58,7 @@ import lombok.experimental.SuperBuilder;
                     type: io.kestra.plugin.docker.cli.Agent
                     taskRunner:
                       type: io.kestra.plugin.scripts.runner.docker.Docker
+                      user: root
                     env:
                       OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
                     prompt: "Review these release notes for breaking changes: v2 removes the legacy /v1 API and adds CSV export."
@@ -83,6 +85,7 @@ import lombok.experimental.SuperBuilder;
                     type: io.kestra.plugin.docker.cli.Agent
                     taskRunner:
                       type: io.kestra.plugin.scripts.runner.docker.Docker
+                      user: root
                     env:
                       OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
                     agentConfig: "{{ inputs.config }}"
@@ -110,6 +113,7 @@ import lombok.experimental.SuperBuilder;
                     type: io.kestra.plugin.docker.cli.Agent
                     taskRunner:
                       type: io.kestra.plugin.scripts.runner.docker.Docker
+                      user: root
                     env:
                       OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
                     prompt: "Create a short checklist for today's deployment review."
