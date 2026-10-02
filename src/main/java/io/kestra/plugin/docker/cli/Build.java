@@ -277,7 +277,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
 
             buildImageCmd.withTags(tags);
 
-            var renderedArgs = runContext.render(this.buildArgs).asMap(String.class, String.class);
+            Map<String, String> renderedArgs = new HashMap<>(runContext.render(this.buildArgs).asMap(String.class, String.class));
             if (!renderedPlatforms.isEmpty()) {
                 addPlatformBuildArgs(renderedArgs, renderedPlatforms.getLast());
             }
