@@ -9,6 +9,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -30,6 +32,96 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @Getter
 @NoArgsConstructor
+@Schema(
+    title = "Run a Docker Agent team",
+    description = """
+        Runs a Docker Agent team non-interactively using `/docker-agent run --exec` through the configured task runner.
+        Supply the team configuration as inline YAML, a relative path in the task working directory, or a `kestra://` URI.
+        The configuration is copied to a temporary YAML file before execution. Pass model provider API keys through `env` using Kestra secrets.
+        The default image is `docker/docker-agent:1.146.0`; custom images must provide the executable at `/docker-agent`.
+        Agent stdout and stderr are streamed to the execution logs. Returns `ScriptOutput`, including the exit code and configured output files.
+        """
+)
+@Plugin(
+    aliases = "io.kestra.plugin.docker.Agent",
+    examples = {
+        @Example(
+            title = "Run an agent team from inline configuration",
+            full = true,
+            code = """
+                id: docker_agent_review
+                namespace: company.team
+
+                tasks:
+                  - id: review
+                    type: io.kestra.plugin.docker.cli.Agent
+                    taskRunner:
+                      type: io.kestra.plugin.scripts.runner.docker.Docker
+                    env:
+                      OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
+                    prompt: "Review these release notes for breaking changes: v2 removes the legacy /v1 API and adds CSV export."
+                    agentConfig: |
+                      agents:
+                        root:
+                          model: openai/gpt-5
+                          instruction: You review release notes for breaking changes.
+                """
+        ),
+        @Example(
+            title = "Run an agent team from an uploaded configuration file",
+            full = true,
+            code = """
+                id: docker_agent_from_file
+                namespace: company.team
+
+                inputs:
+                  - id: config
+                    type: FILE
+
+                tasks:
+                  - id: run_team
+                    type: io.kestra.plugin.docker.cli.Agent
+                    taskRunner:
+                      type: io.kestra.plugin.scripts.runner.docker.Docker
+                    env:
+                      OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
+                    agentConfig: "{{ inputs.config }}"
+                    prompt: "Create a checklist for reviewing a production deployment."
+
+                  - id: log_result
+                    type: io.kestra.plugin.core.log.Log
+                    message: "Agent exit code: {{ outputs.run_team.exitCode }}"
+                """
+        ),
+        @Example(
+            title = "Run an agent team on a daily schedule",
+            full = true,
+            code = """
+                id: docker_agent_daily
+                namespace: company.team
+
+                triggers:
+                  - id: every_morning
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 7 * * *"
+
+                tasks:
+                  - id: daily_checklist
+                    type: io.kestra.plugin.docker.cli.Agent
+                    taskRunner:
+                      type: io.kestra.plugin.scripts.runner.docker.Docker
+                    env:
+                      OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
+                    prompt: "Create a short checklist for today's deployment review."
+                    agentConfig: |
+                      agents:
+                        root:
+                          model: openai/gpt-5
+                          instruction: You write concise operations checklists.
+                """
+        )
+    }
+)
 public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutput> {
     private static final String DEFAULT_IMAGE = "docker/docker-agent:1.146.0";
 

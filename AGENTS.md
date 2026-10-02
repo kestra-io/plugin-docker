@@ -3,7 +3,7 @@
 ## What
 
 - Provides plugin components under `io.kestra.plugin.docker`.
-- Includes classes such as `PushResponseItemCallback`, `Build`, `Compose`, `Run`.
+- Includes classes such as `PushResponseItemCallback`, `Build`, `Compose`, `Run`, `Agent`.
 
 ## Why
 
@@ -18,10 +18,12 @@
 Single-module plugin. Source packages under `io.kestra.plugin`:
 
 - `docker`
+- `docker.cli`
 - `docker.model`
 
 ### Key Plugin Classes
 
+- `io.kestra.plugin.docker.cli.Agent` — run a Docker Agent team through `AbstractExecScript`; alias: `io.kestra.plugin.docker.Agent`
 - `io.kestra.plugin.docker.Build`
 - `io.kestra.plugin.docker.Compose`
 - `io.kestra.plugin.docker.ImageLs`
@@ -49,6 +51,8 @@ plugin-docker/
 ```
 
 ### Testing
+
+`io.kestra.plugin.docker.cli.AgentTest` covers configuration sources, rendering, command arguments, and image defaults without Docker or live model-provider calls. Run it with `./gradlew test --tests io.kestra.plugin.docker.cli.AgentTest`. Keep execution tests independent of live AI calls.
 
 `io.kestra.plugin.docker.model.DeleteIT`, `PullIT`, and `ListIT` are integration tests that run against a **live** Docker Model Runner and are gated behind `@DockerModelRunnerTest`, which requires both `DMR_IT_TESTS=true` and a reachable DMR at `localhost:12434`. They are skipped by default (including in CI) and are **destructive**: `PullIT` and `DeleteIT` pull and delete the real `ai/smollm2` tag on whatever DMR instance is reachable. DMR tags are not test-namespaced, so a developer running with the opt-in set and an existing `ai/smollm2` model of their own will lose it. Only set `DMR_IT_TESTS=true` against a DMR instance you don't mind losing that model on.
 
