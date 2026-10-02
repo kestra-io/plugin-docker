@@ -2,11 +2,16 @@ package io.kestra.plugin.docker.cli;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import com.google.common.collect.ImmutableMap;
 
@@ -17,6 +22,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.YamlParser;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
@@ -48,6 +54,92 @@ class BuildTest {
                     ARG APT_PACKAGES=""
 
                     RUN apt-get update && apt-get install -y --no-install-recommends ${APT_PACKAGES};
+                """))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());
+
+        Build.Output run = task.run(runContext);
+        assertThat(run.getImageId(), notNullValue());
+    }
+
+    @ParameterizedTest
+    @MethodSource("platformBuildArgs")
+    void shouldAddPlatformBuildArgs(String platform, Map<String, String> expected) {
+        Map<String, String> buildArgs = new HashMap<>();
+        Build.addPlatformBuildArgs(buildArgs, platform);
+
+        assertThat(buildArgs, is(expected));
+    }
+
+    static java.util.stream.Stream<Arguments> platformBuildArgs() {
+        return Stream.of(
+            Arguments.of("linux/amd64", Map.of(
+                "TARGETPLATFORM", "linux/amd64",
+                "TARGETOS", "linux",
+                "TARGETARCH", "amd64"
+            )),
+            Arguments.of("linux/arm64/v8", Map.of(
+                "TARGETPLATFORM", "linux/arm64/v8",
+                "TARGETOS", "linux",
+                "TARGETARCH", "arm64",
+                "TARGETVARIANT", "v8"
+            ))
+        );
+    }
+
+    @Test
+    void shouldPreserveExplicitPlatformBuildArgs() {
+        Map<String, String> buildArgs = new HashMap<>(Map.of(
+            "TARGETPLATFORM", "custom-platform",
+            "TARGETOS", "custom-os",
+            "TARGETARCH", "custom-arch",
+            "TARGETVARIANT", "custom-variant"
+        ));
+
+        Build.addPlatformBuildArgs(buildArgs, "linux/arm64/v8");
+
+        assertThat(buildArgs, is(Map.of(
+            "TARGETPLATFORM", "custom-platform",
+            "TARGETOS", "custom-os",
+            "TARGETARCH", "custom-arch",
+            "TARGETVARIANT", "custom-variant"
+        )));
+    }
+
+    @Test
+    void shouldExposeTargetPlatformArgsToDockerfile() throws Exception {
+        Build task = Build.builder()
+            .id("build-platform-args-" + IdUtils.create())
+            .type(Build.class.getName())
+            .platforms(Property.ofValue(List.of("linux/amd64")))
+            .tags(Property.ofValue(List.of("unit-test-platform-args")))
+            .dockerfile(Property.ofValue("""
+                    FROM alpine
+                    ARG TARGETOS
+                    ARG TARGETARCH
+                    RUN test "$TARGETOS" = linux && test "$TARGETARCH" = amd64
+                """))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());
+
+        Build.Output run = task.run(runContext);
+        assertThat(run.getImageId(), notNullValue());
+    }
+
+    @Test
+    void shouldKeepExplicitTargetArgOverPlatform() throws Exception {
+        Build task = Build.builder()
+            .id("build-platform-args-" + IdUtils.create())
+            .type(Build.class.getName())
+            .platforms(Property.ofValue(List.of("linux/amd64")))
+            .buildArgs(Property.ofValue(Map.of("TARGETARCH", "custom-arch")))
+            .tags(Property.ofValue(List.of("unit-test-platform-args-override")))
+            .dockerfile(Property.ofValue("""
+                    FROM alpine
+                    ARG TARGETARCH
+                    RUN test "$TARGETARCH" = custom-arch
                 """))
             .build();
 
