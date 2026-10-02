@@ -34,7 +34,7 @@ The task invokes `/docker-agent run --exec <temporary-config.yaml> [prompt]`. `-
 
 The Docker task runner requires a reachable Docker daemon and clears the image entrypoint by default so the command can run directly. Installing Docker Agent on a developer's computer does not install it inside the execution image. Keep the runner's default entrypoint when using the examples below. Set `user: root` because the image's default non-root user cannot read Kestra's temporary configuration files.
 
-A relative configuration path must refer to a regular file already present in the task working directory. Missing files fail the task; the original file is preserved. For uploaded configurations, use a `FILE` input as shown below. The configuration must declare the tools and data access needed for the assignment; the task does not grant access to incidents, repositories, or deployment records automatically.
+A relative configuration path, such as `configs/agent.yaml`, must refer to a regular file whose YAML content is already present in the task working directory before `Agent` starts. The workflow must make that file available, for example through an earlier task inside an enclosing `WorkingDirectory` task. Configuration is read before the task's own `inputFiles` and `namespaceFiles` are staged, so those properties cannot supply the relative configuration file at this point. Missing files fail the task; the original file is preserved. For uploaded configurations, use a `FILE` input as shown below. The configuration must declare the tools and data access needed for the assignment; the task does not grant access to incidents, repositories, or deployment records automatically.
 
 ### Inline configuration
 
