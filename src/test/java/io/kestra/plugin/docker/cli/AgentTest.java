@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -16,6 +17,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.scripts.runner.docker.Docker;
 
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
@@ -223,5 +225,28 @@ class AgentTest {
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of("image", "company/docker-agent:custom"));
 
         assertThat(runContext.render(task.getContainerImage()).as(String.class).orElseThrow(), is("company/docker-agent:custom"));
+    }
+
+    @Test
+    void inheritedKillReachesConfiguredRunner() {
+        AtomicBoolean stopped = new AtomicBoolean();
+        var runner = new CancellationProbeDocker(stopped);
+        var task = Agent.builder()
+            .id("agent-kill-test")
+            .type(Agent.class.getName())
+            .agentConfig(Property.ofValue(CONFIG))
+            .taskRunner(runner)
+            .build();
+
+        task.kill();
+
+        assertThat(stopped.get(), is(true));
+    }
+
+    private static class CancellationProbeDocker extends Docker {
+        private CancellationProbeDocker(AtomicBoolean stopped) {
+            this.type = Docker.class.getName();
+            onKill(() -> stopped.set(true));
+        }
     }
 }
