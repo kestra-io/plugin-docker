@@ -277,7 +277,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
 
             buildImageCmd.withTags(tags);
 
-            Map<String, String> renderedArgs = new HashMap<>(runContext.render(this.buildArgs).asMap(String.class, String.class));
+            var renderedArgs = new HashMap<>(runContext.render(this.buildArgs).asMap(String.class, String.class));
             if (!renderedPlatforms.isEmpty()) {
                 // docker-java sends a single platform (last withPlatform call wins), so derive args from that one.
                 addPlatformBuildArgs(renderedArgs, renderedPlatforms.getLast());
