@@ -5,8 +5,8 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -91,6 +91,7 @@ class BuildTest {
     @Test
     void shouldPreserveExplicitPlatformBuildArgs() {
         Map<String, String> buildArgs = new HashMap<>(Map.of(
+            "TARGETPLATFORM", "custom-platform",
             "TARGETOS", "custom-os",
             "TARGETARCH", "custom-arch",
             "TARGETVARIANT", "custom-variant"
@@ -99,6 +100,7 @@ class BuildTest {
         Build.addPlatformBuildArgs(buildArgs, "linux/arm64/v8");
 
         assertThat(buildArgs, is(Map.of(
+            "TARGETPLATFORM", "custom-platform",
             "TARGETOS", "custom-os",
             "TARGETARCH", "custom-arch",
             "TARGETVARIANT", "custom-variant"
