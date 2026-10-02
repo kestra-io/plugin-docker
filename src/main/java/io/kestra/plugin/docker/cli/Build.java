@@ -164,7 +164,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
 
     @Schema(
         title = "Target platforms for the image",
-        description = "Each entry is passed to buildx as `--platform`; leave empty to use the daemon default."
+        description = "Target platform for the image passed to the Docker daemon (e.g. `linux/amd64`); only the last entry is used. `TARGETPLATFORM`, `TARGETOS`, `TARGETARCH` and `TARGETVARIANT` build args are derived from it unless set in `buildArgs`. Leave empty to use the daemon default."
     )
     @PluginProperty(group = "advanced")
     private Property<List<String>> platforms;
@@ -279,6 +279,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
 
             Map<String, String> renderedArgs = new HashMap<>(runContext.render(this.buildArgs).asMap(String.class, String.class));
             if (!renderedPlatforms.isEmpty()) {
+                // docker-java sends a single platform (last withPlatform call wins), so derive args from that one.
                 addPlatformBuildArgs(renderedArgs, renderedPlatforms.getLast());
             }
             if (!renderedArgs.isEmpty()) {
@@ -321,6 +322,7 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
             return;
         }
 
+        buildArgs.putIfAbsent("TARGETPLATFORM", platform);
         buildArgs.putIfAbsent("TARGETOS", parts[0]);
         buildArgs.putIfAbsent("TARGETARCH", parts[1]);
         if (parts.length == 3) {
