@@ -30,7 +30,9 @@ If your goal is running a script inside a container as part of a flow, use a [Do
 | `env` | Inherited environment variables, including the credentials required by the configured model provider. Use Kestra secrets. |
 | `taskRunner` | Inherited execution runner. The examples use the Docker task runner. |
 
-The task invokes `/docker-agent run --exec -- <config.yaml> <prompt>`. `--exec` selects headless execution; the task does not enable JSON output or extract a separate final-answer field. The pinned [Docker image](https://hub.docker.com/r/docker/docker-agent/tags) contains the standalone binary at `/docker-agent`, rather than registering `docker agent` as a CLI plugin. See the [versioned Dockerfile](https://github.com/docker/docker-agent/blob/v1.146.0/Dockerfile) and [CLI reference](https://docker.github.io/docker-agent/features/cli/).
+The task invokes `/docker-agent run --exec -- <config.yaml> <prompt>`. `--exec` selects headless execution with plain-text output. The pinned [Docker image](https://hub.docker.com/r/docker/docker-agent/tags) contains the standalone binary at `/docker-agent`, rather than registering `docker agent` as a CLI plugin. See the [versioned Dockerfile](https://github.com/docker/docker-agent/blob/v1.146.0/Dockerfile) and [CLI reference](https://docker.github.io/docker-agent/features/cli/).
+
+The task does not use Docker Agent's `--json` mode. That mode does not return a single final-answer field; it emits newline-delimited JSON for every internal runtime event, covering dozens of event types such as streamed answer fragments, tool calls, and token usage, with no documented stable schema. Exposing an answer output would mean reassembling it from streamed fragments and depending on that undocumented format. Plain `--exec` mode keeps the execution logs readable and does not depend on Docker Agent's internal event format. See the [pinned JSON output loop](https://github.com/docker/docker-agent/blob/v1.146.0/pkg/cli/runner.go#L130-L159) and [event types](https://github.com/docker/docker-agent/blob/v1.146.0/pkg/runtime/event.go).
 
 The standalone `--` ends CLI option parsing before the config and prompt. For example, `/docker-agent run --exec -- config.yaml "--help"` sends the literal prompt `--help` to the agent. Without the separator, quoting keeps the prompt in one argument but does not prevent Docker Agent from interpreting it as a help flag. The task adds this separator automatically.
 
@@ -155,7 +157,7 @@ tasks:
 
 ### Outputs and failures
 
-The task returns the existing `ScriptOutput`: `exitCode`, stdout/stderr line counts, and configured output files. Agent stdout and stderr are streamed to Kestra's execution logs; there is no separate `answer` output. API keys belong in `env`, not command arguments or log messages.
+The task returns the existing `ScriptOutput`: `exitCode`, stdout/stderr line counts, and configured output files. Agent stdout and stderr are streamed to Kestra's execution logs; there is no separate `answer` output because Docker Agent does not provide a stable machine-readable answer (see [Configuration and execution](#configuration-and-execution)). API keys belong in `env`, not command arguments or log messages.
 
 Nonzero CLI exits fail the task through the execution framework. Kestra's normal retry and error-handling mechanisms apply. The task inherits cancellation handling from `AbstractExecScript`, which delegates to the configured task runner.
 
