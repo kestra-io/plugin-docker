@@ -8,6 +8,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -16,6 +17,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.plugin.scripts.exec.AbstractExecScript;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
@@ -131,6 +133,8 @@ import lombok.experimental.SuperBuilder;
 )
 public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutput> {
     private static final String DEFAULT_IMAGE = "docker/docker-agent:1.146.0";
+    // A single-line YAML mapping such as `agents:` or `agents: {root: ...}`; a colon must be followed by whitespace or end the line.
+    private static final Pattern SINGLE_LINE_YAML_MAPPING = Pattern.compile("^[^:]+:(\\s.*)?$");
 
     @Builder.Default
     @Schema(
@@ -197,7 +201,7 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
         var workingDir = runContext.workingDir();
         String source = config.strip();
 
-        if (source.startsWith("kestra://")) {
+        if (source.startsWith(StorageContext.KESTRA_PROTOCOL)) {
             Path tempFile = workingDir.createTempFile(".yaml");
             try (InputStream input = runContext.storage().getFile(URI.create(source))) {
                 Files.copy(input, tempFile, StandardCopyOption.REPLACE_EXISTING);
@@ -207,7 +211,7 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
 
         // Agent configuration is a YAML mapping; recognize block and flow forms.
         boolean inlineYaml = source.contains("\n") || source.contains("\r")
-            || source.startsWith("{") || source.matches("^[^:]+:(\\s.*)?$");
+            || source.startsWith("{") || SINGLE_LINE_YAML_MAPPING.matcher(source).matches();
         if (inlineYaml) {
             return workingDir.createTempFile(config.getBytes(StandardCharsets.UTF_8), ".yaml");
         }
@@ -219,7 +223,9 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
 
         Path sourceFile = workingDir.resolve(relativePath);
         if (!Files.isRegularFile(sourceFile)) {
-            throw new IllegalArgumentException("agentConfig file does not exist or is not a regular file: " + source);
+            throw new IllegalArgumentException(
+                "agentConfig must be inline YAML, a kestra:// URI, or an existing relative file in the working directory: " + source
+            );
         }
 
         // Preserve the config directory so Docker Agent can resolve config-relative references.

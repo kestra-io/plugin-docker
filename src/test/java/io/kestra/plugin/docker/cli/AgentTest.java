@@ -164,7 +164,7 @@ class AgentTest {
 
         var exception = assertThrows(IllegalArgumentException.class, () -> task.resolveAgentConfig(runContext));
 
-        assertThat(exception.getMessage(), containsString("file does not exist or is not a regular file"));
+        assertThat(exception.getMessage(), containsString("must be inline YAML, a kestra:// URI, or an existing relative file"));
     }
 
     @Test
@@ -175,7 +175,7 @@ class AgentTest {
 
         var exception = assertThrows(IllegalArgumentException.class, () -> task.resolveAgentConfig(runContext));
 
-        assertThat(exception.getMessage(), containsString("file does not exist or is not a regular file"));
+        assertThat(exception.getMessage(), containsString("must be inline YAML, a kestra:// URI, or an existing relative file"));
     }
 
     @Test
