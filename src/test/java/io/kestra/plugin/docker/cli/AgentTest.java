@@ -45,6 +45,7 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.sameInstance;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -284,7 +285,7 @@ class AgentTest {
     }
 
     @Test
-    void inheritedKillReachesConfiguredRunner() throws Exception {
+    void killReachesConfiguredRunner() throws Exception {
         AtomicBoolean stopped = new AtomicBoolean();
         var runner = new CancellationProbeDocker(stopped);
         var task = Agent.builder()
@@ -298,7 +299,6 @@ class AgentTest {
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         var commands = task.commands(runContext);
         assertThat(commands.getTaskRunner(), sameInstance(runner));
-        assertThat(task.getTaskRunner(), sameInstance(runner));
 
         task.kill();
 
@@ -307,12 +307,13 @@ class AgentTest {
 
     @Test
     @Timeout(60)
-    void inheritedKillStopsDefaultRunnerContainer() throws Exception {
+    void killStopsDefaultRunnerContainer() throws Exception {
         var task = task(CONFIG);
         var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
         var commands = task.commands(runContext)
             .withCommands(Property.ofValue(List.of("/bin/sh", "-c", "echo 'Agent cancellation test started'; exec sleep 120")));
-        assertThat(task.getTaskRunner(), sameInstance(commands.getTaskRunner()));
+        // The default runner is tracked for kill() without being written into the task configuration.
+        assertThat(task.getTaskRunner(), nullValue());
 
         CountDownLatch started = new CountDownLatch(1);
         Runnable stopReceiving = logQueue.receive(message ->

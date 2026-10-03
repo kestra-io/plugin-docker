@@ -8,7 +8,10 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -16,6 +19,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.plugin.scripts.exec.AbstractExecScript;
@@ -24,6 +28,7 @@ import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -191,13 +196,34 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
     @PluginProperty(group = "main")
     private Property<String> prompt;
 
+    // The runner executing this task, including the default runner AbstractExecScript creates when none is configured.
+    @JsonIgnore
+    @Getter(AccessLevel.NONE)
+    @EqualsAndHashCode.Exclude
+    @ToString.Exclude
+    private final transient AtomicReference<TaskRunner<?>> activeRunner = new AtomicReference<>();
+
     @Override
     protected CommandsWrapper commands(RunContext runContext) throws IllegalVariableEvaluationException {
         CommandsWrapper commands = super.commands(runContext);
-        // Retain the effective runner, including the default, so inherited kill() reaches it.
-        this.taskRunner = commands.getTaskRunner();
+        TaskRunner<?> runner = commands.getTaskRunner();
+        this.activeRunner.set(runner);
         // Legacy Docker options have already been applied; reuse the same runner during execution.
-        return commands.withTaskRunner(this.taskRunner).withDockerOptions(null);
+        return commands.withTaskRunner(runner).withDockerOptions(null);
+    }
+
+    /**
+     * Stops the runner executing this task. The inherited implementation only reaches a configured {@code taskRunner},
+     * not the default runner created when none is set.
+     */
+    @Override
+    public void kill() {
+        TaskRunner<?> runner = this.activeRunner.get();
+        if (runner != null) {
+            runner.kill();
+        } else {
+            super.kill();
+        }
     }
 
     @Override
