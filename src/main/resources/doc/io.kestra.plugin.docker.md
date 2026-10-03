@@ -25,7 +25,7 @@ If your goal is running a script inside a container as part of a flow, use a [Do
 | Property | Purpose |
 | --- | --- |
 | `agentConfig` | Required Docker Agent configuration: inline YAML, a relative path in the task working directory, or a `kestra://` internal-storage URI. Existing relative files are passed directly; inline YAML and URI content are written to temporary YAML files. |
-| `prompt` | Required, non-blank initial assignment for headless execution. Kestra expressions are rendered and the result is passed as one argument. |
+| `prompt` | Required, non-blank initial assignment for headless execution. Kestra expressions are rendered and the result is passed as one argument. Any `kestra://` URI in the prompt is downloaded into the working directory and replaced with its local path before execution; a missing or malformed URI fails the task. |
 | `containerImage` | Execution image, defaulting to `docker/docker-agent:1.146.0`. Custom images must provide `/docker-agent`. |
 | `env` | Inherited environment variables, including the credentials required by the configured model provider. Use Kestra secrets. |
 | `taskRunner` | Inherited execution runner. The examples use the Docker task runner. |
@@ -121,6 +121,36 @@ tasks:
         root:
           model: openai/gpt-5
           instruction: You write concise operations checklists.
+```
+
+### Pass a file through the prompt
+
+Reference an internal-storage file in `prompt`, such as an upstream task's output URI. Kestra downloads the file into the working directory and replaces the URI with its local path, so an agent with the `filesystem` toolset can open it inside the container.
+
+```yaml
+id: docker_agent_summarize_file
+namespace: company.team
+
+tasks:
+  - id: download
+    type: io.kestra.plugin.core.http.Download
+    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+  - id: summarize
+    type: io.kestra.plugin.docker.cli.Agent
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      user: root
+    env:
+      OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
+    prompt: "Summarize the orders in {{ outputs.download.uri }}."
+    agentConfig: |
+      agents:
+        root:
+          model: openai/gpt-5
+          instruction: You summarize CSV files.
+          toolsets:
+            - type: filesystem
 ```
 
 ### Outputs and failures
