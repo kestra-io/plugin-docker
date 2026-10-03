@@ -50,11 +50,7 @@
 
 ## Run a Docker Agent team
 
-Use `io.kestra.plugin.docker.cli.Agent` (also available as `io.kestra.plugin.docker.Agent`) to run a [Docker Agent](https://docs.docker.com/ai/docker-agent/) team from a flow. The task accepts inline YAML, a relative configuration path in the task working directory, or a Kestra internal-storage URI. Pass a required, non-blank initial assignment through `prompt` and model provider API keys through `env` using secrets. The task inserts the CLI option separator `--` before the config and prompt, so prompts such as `--help` are sent as text rather than parsed as flags.
-
-For a relative path such as `configs/agent.yaml`, the workflow must make the file and its YAML content available in the task working directory before `Agent` starts. A missing file fails the task.
-
-Existing relative configurations are passed directly to Docker Agent to preserve their directory and config-relative references such as `instruction_file`. For example, `configs/agent.yaml` referencing `instructions/root.md` uses `configs/instructions/root.md`. The Docker runner makes the working-directory files available in the container while preserving their directory structure. Inline YAML and `kestra://` configurations still use temporary files at the working-directory root; their referenced files must be available relative to that root. Direct-path handling intentionally departs from issue #161’s request to write every configuration to a temporary file. See the [configuration and execution details](src/main/resources/doc/io.kestra.plugin.docker.md#configuration-and-execution).
+Use `io.kestra.plugin.docker.cli.Agent` (also available as `io.kestra.plugin.docker.Agent`) to run a [Docker Agent](https://docs.docker.com/ai/docker-agent/) team headlessly from a flow. Supply the configuration as inline YAML, a relative path in the task working directory, or a `kestra://` URI, pass the required `prompt`, and provide model provider API keys through `env` using secrets.
 
 ```yaml
 id: docker_agent_review
@@ -76,9 +72,7 @@ tasks:
           instruction: You review release notes for breaking changes.
 ```
 
-The Docker task runner requires a reachable Docker daemon. The default image is `docker/docker-agent:1.146.0`; override `containerImage` to use a custom image that provides `/docker-agent`. Execution uses headless mode, streams the agent's output to Kestra logs, and returns `ScriptOutput`, including `exitCode`. Set the Docker runner `user: root` so the image can read Kestra temporary files. Provider credentials are required for the chosen model.
-
-See the [Docker plugin how-to](src/main/resources/doc/io.kestra.plugin.docker.md#docker-agent) for uploaded configuration files, scheduling, and output behavior.
+See the [Docker plugin how-to](src/main/resources/doc/io.kestra.plugin.docker.md#docker-agent) for configuration sources, the Docker runner requirements, more examples, and output behavior.
 
 ## Documentation
 * Full documentation can be found under: [kestra.io/docs](https://kestra.io/docs)
