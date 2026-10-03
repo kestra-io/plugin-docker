@@ -128,6 +128,35 @@ import lombok.experimental.SuperBuilder;
                           model: openai/gpt-5
                           instruction: You write concise operations checklists.
                 """
+        ),
+        @Example(
+            title = "Pass an upstream output file to the agent through the prompt",
+            full = true,
+            code = """
+                id: docker_agent_summarize_file
+                namespace: company.team
+
+                tasks:
+                  - id: download
+                    type: io.kestra.plugin.core.http.Download
+                    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+                  - id: summarize
+                    type: io.kestra.plugin.docker.cli.Agent
+                    taskRunner:
+                      type: io.kestra.plugin.scripts.runner.docker.Docker
+                      user: root
+                    env:
+                      OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
+                    prompt: "Summarize the orders in {{ outputs.download.uri }}."
+                    agentConfig: |
+                      agents:
+                        root:
+                          model: openai/gpt-5
+                          instruction: You summarize CSV files.
+                          toolsets:
+                            - type: filesystem
+                """
         )
     }
 )
@@ -155,7 +184,8 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
 
     @Schema(
         title = "Prompt",
-        description = "Required non-blank initial assignment for headless execution. YAML instructions define agent behavior and do not replace this message."
+        description = "Required non-blank initial assignment for headless execution. YAML instructions define agent behavior and do not replace this message. " +
+            "Any `kestra://` URI in the prompt is downloaded into the working directory and replaced with its local path before execution; a missing or malformed URI fails the task."
     )
     @NotNull
     @PluginProperty(group = "main")
