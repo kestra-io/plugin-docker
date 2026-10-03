@@ -197,6 +197,16 @@ class AgentTest {
     }
 
     @Test
+    void parentDirectoryPathIsRejected() {
+        var task = task("../outside.yaml");
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+        var exception = assertThrows(IllegalArgumentException.class, () -> task.resolveAgentConfig(runContext));
+
+        assertThat(exception.getMessage(), containsString("inside the current working directory"));
+    }
+
+    @Test
     void missingPromptIsRejected() throws Exception {
         var task = Agent.builder()
             .id("agent-missing-prompt-test")
