@@ -1,6 +1,6 @@
 # How to use the Docker plugin
 
-Manage Docker images and containers from Kestra flows — building, pushing, running, and composing — against a local or remote Docker daemon.
+Manage Docker images and containers from Kestra flows — building, pushing, running, and composing — against a local or remote Docker daemon. Run Docker Agent teams through a task runner using the `Agent` task.
 
 ## Authentication
 
@@ -15,6 +15,149 @@ For private registries, set `credentials.registry`, `credentials.username`, and 
 For CI/CD automation, `Build` builds an image from a Dockerfile, `Tag` applies additional tags, and `Push` uploads an image to a registry. `Pull` pre-fetches an image explicitly. `Compose` runs a multi-container stack from a `docker-compose.yml` file and is useful for integration testing or spinning up dependent services. `ImageLs` lists the images available on the host. `Stop` and `Rm` manage container lifecycle; `Prune` cleans up unused resources.
 
 If your goal is running a script inside a container as part of a flow, use a [Docker task runner](https://kestra.io/docs/task-runners) on a script task rather than the Docker plugin — the plugin is intended for managing Docker artifacts and infrastructure, not for script execution isolation.
+
+## Docker Agent
+
+`io.kestra.plugin.docker.cli.Agent`, also available through the alias `io.kestra.plugin.docker.Agent`, runs a [Docker Agent](https://docs.docker.com/ai/docker-agent/) team using the existing script execution framework. Docker Agent supplies the agent runtime and tools; the Kestra task prepares the configuration and invokes the CLI.
+
+### Configuration and execution
+
+| Property | Purpose |
+| --- | --- |
+| `agentConfig` | Required Docker Agent configuration: inline YAML, a relative path in the task working directory, or a `kestra://` internal-storage URI. Existing relative files are passed directly; inline YAML and URI content are written to temporary YAML files. |
+| `prompt` | Required, non-blank initial assignment for headless execution. Kestra expressions are rendered and the result is passed as one argument. Any `kestra://` URI in the prompt is downloaded into the working directory and replaced with its local path before execution; a missing or malformed URI fails the task. |
+| `containerImage` | Execution image, defaulting to `docker/docker-agent:1.146.0`. Custom images must provide `/docker-agent`. |
+| `env` | Inherited environment variables, including the credentials required by the configured model provider. Use Kestra secrets. |
+| `taskRunner` | Inherited execution runner. The examples use the Docker task runner. |
+
+The task invokes `/docker-agent run --exec -- <config.yaml> <prompt>`. `--exec` selects headless execution with plain-text output. The pinned [Docker image](https://hub.docker.com/r/docker/docker-agent/tags) contains the standalone binary at `/docker-agent`, rather than registering `docker agent` as a CLI plugin. See the [versioned Dockerfile](https://github.com/docker/docker-agent/blob/v1.146.0/Dockerfile) and [CLI reference](https://docker.github.io/docker-agent/features/cli/).
+
+The task does not use Docker Agent's `--json` mode. That mode does not return a single final-answer field; it emits newline-delimited JSON for every internal runtime event, covering dozens of event types such as streamed answer fragments, tool calls, and token usage, with no documented stable schema. Exposing an answer output would mean reassembling it from streamed fragments and depending on that undocumented format. Plain `--exec` mode keeps the execution logs readable and does not depend on Docker Agent's internal event format. See the [pinned JSON output loop](https://github.com/docker/docker-agent/blob/v1.146.0/pkg/cli/runner.go#L130-L159) and [event types](https://github.com/docker/docker-agent/blob/v1.146.0/pkg/runtime/event.go).
+
+The standalone `--` ends CLI option parsing before the config and prompt. For example, `/docker-agent run --exec -- config.yaml "--help"` sends the literal prompt `--help` to the agent. Without the separator, quoting keeps the prompt in one argument but does not prevent Docker Agent from interpreting it as a help flag. The task adds this separator automatically.
+
+`prompt` is required because the pinned headless CLI needs an initial message through arguments or stdin, and this task supplies the message through the prompt argument. YAML `instruction` and `instruction_file` define agent behavior; they do not supply that initial message. See the [pinned headless runner](https://github.com/docker/docker-agent/blob/v1.146.0/pkg/cli/runner.go#L309-L324).
+
+The Docker task runner requires a reachable Docker daemon and clears the image entrypoint by default so the command can run directly. Installing Docker Agent on a developer's computer does not install it inside the execution image. Keep the runner's default entrypoint when using the examples below. Set `user: root` because the image's default non-root user cannot read Kestra's temporary configuration files.
+
+A relative configuration path, such as `configs/agent.yaml`, must refer to a regular file whose YAML content is already present in the task working directory before `Agent` starts. The workflow must make that file available, for example through an earlier task inside an enclosing `WorkingDirectory` task. Configuration existence is checked before the task's own `inputFiles` and `namespaceFiles` are staged, so those properties cannot supply the relative configuration file at this point. Missing files fail the task; the original file is preserved. For uploaded configurations, use a `FILE` input as shown below. The configuration must declare the tools and data access needed for the assignment; the task does not grant access to incidents, repositories, or deployment records automatically.
+
+The Docker task runner makes the task working-directory files available inside the execution container before starting Docker Agent. Its default `VOLUME` file-handling strategy copies the files, preserving their directory structure, to the container's working-directory path. The alternative `MOUNT` strategy bind-mounts the working directory. Passing a config path does not itself transfer files or download files referenced by the YAML; those files must also be available in the task working directory.
+
+**Config-relative instruction files:** Docker Agent supports `instruction_file` and resolves it relative to the configuration file's directory. Existing relative configs are passed directly, so `configs/agent.yaml` containing `instruction_file: instructions/root.md` resolves to `configs/instructions/root.md` inside the container. Both files must be available in the task working directory. Inline YAML and `kestra://` configs use temporary files at the working-directory root, so their references resolve relative to that root; downloading a URI config does not download sibling files. See the [Docker Agent instruction-file loader](https://github.com/docker/docker-agent/blob/v1.146.0/pkg/config/config.go#L97-L159).
+
+### Inline configuration
+
+```yaml
+id: docker_agent_review
+namespace: company.team
+
+tasks:
+  - id: review
+    type: io.kestra.plugin.docker.cli.Agent
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      user: root
+    env:
+      OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
+    prompt: "Review these release notes for breaking changes: v2 removes the legacy /v1 API and adds CSV export."
+    agentConfig: |
+      agents:
+        root:
+          model: openai/gpt-5
+          instruction: You review release notes for breaking changes.
+```
+
+### Uploaded configuration
+
+Upload an agent YAML file using an OpenAI model, such as the configuration above. The `FILE` input resolves to a `kestra://` URI; the task downloads the file into the working directory. For other model providers, supply the corresponding API key through `env` instead.
+
+```yaml
+id: docker_agent_from_file
+namespace: company.team
+
+inputs:
+  - id: config
+    type: FILE
+
+tasks:
+  - id: run_team
+    type: io.kestra.plugin.docker.cli.Agent
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      user: root
+    env:
+      OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
+    agentConfig: "{{ inputs.config }}"
+    prompt: "Create a checklist for reviewing a production deployment."
+
+  - id: log_result
+    type: io.kestra.plugin.core.log.Log
+    message: "Agent exit code: {{ outputs.run_team.exitCode }}"
+```
+
+### Scheduled execution
+
+```yaml
+id: docker_agent_daily
+namespace: company.team
+
+triggers:
+  - id: every_morning
+    type: io.kestra.plugin.core.trigger.Schedule
+    cron: "0 7 * * *"
+
+tasks:
+  - id: daily_checklist
+    type: io.kestra.plugin.docker.cli.Agent
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      user: root
+    env:
+      OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
+    prompt: "Create a short checklist for today's deployment review."
+    agentConfig: |
+      agents:
+        root:
+          model: openai/gpt-5
+          instruction: You write concise operations checklists.
+```
+
+### Pass a file through the prompt
+
+Reference an internal-storage file in `prompt`, such as an upstream task's output URI. Kestra downloads the file into the working directory and replaces the URI with its local path, so an agent with the `filesystem` toolset can open it inside the container.
+
+```yaml
+id: docker_agent_summarize_file
+namespace: company.team
+
+tasks:
+  - id: download
+    type: io.kestra.plugin.core.http.Download
+    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+  - id: summarize
+    type: io.kestra.plugin.docker.cli.Agent
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      user: root
+    env:
+      OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
+    prompt: "Summarize the orders in {{ outputs.download.uri }}."
+    agentConfig: |
+      agents:
+        root:
+          model: openai/gpt-5
+          instruction: You summarize CSV files.
+          toolsets:
+            - type: filesystem
+```
+
+### Outputs and failures
+
+The task returns the existing `ScriptOutput`: `exitCode`, stdout/stderr line counts, and configured output files. Agent stdout and stderr are streamed to Kestra's execution logs; there is no separate `answer` output because Docker Agent does not provide a stable machine-readable answer (see [Configuration and execution](#configuration-and-execution)). API keys belong in `env`, not command arguments or log messages.
+
+Nonzero CLI exits fail the task through the execution framework. Kestra's normal retry and error-handling mechanisms apply. The task inherits cancellation handling from `AbstractExecScript`, which delegates to the configured task runner.
 
 ## Docker Model Runner
 
