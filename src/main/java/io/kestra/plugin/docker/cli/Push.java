@@ -89,7 +89,11 @@ import io.kestra.core.models.annotations.PluginProperty;
 public class Push extends AbstractDocker implements RunnableTask<VoidOutput> {
     @Schema(
         title = "Image tags to push",
-        description = "Provide one or more tags; use fully qualified references for custom registries. Registry TLS is configured on the Docker host: put a self-signed registry's CA certificate in `/etc/docker/certs.d/<host:port>/ca.crt` (no restart needed), or add an HTTP registry to `insecure-registries` in `/etc/docker/daemon.json` and restart Docker."
+        description = """
+            Provide one or more tags; use fully qualified references for custom registries.
+
+            Registry TLS is configured on the Docker host: put a self-signed registry's CA certificate in `/etc/docker/certs.d/<host:port>/ca.crt` (no restart needed), or add an HTTP registry to `insecure-registries` in `/etc/docker/daemon.json` and restart Docker.
+            """
     )
     @NotNull
     @PluginProperty(group = "main")

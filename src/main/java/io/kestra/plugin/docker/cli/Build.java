@@ -187,7 +187,13 @@ public class Build extends AbstractDocker implements RunnableTask<Build.Output>,
 
     @Schema(
         title = "Image tags",
-        description = "Include the registry host for custom registries. The push is made by the Docker daemon, so registry TLS is configured on the Docker host rather than in the task. For a registry with a self-signed certificate, copy its CA certificate to `/etc/docker/certs.d/<host:port>/ca.crt`; the daemon reads it on the next push, so no restart is needed. For an insecure HTTP registry, add it to `insecure-registries` in `/etc/docker/daemon.json` as shown in the linked [gist](https://gist.github.com/brian-mulier-p/0c5a0ae85e83a179d6e93b22cb471934) and restart Docker (`systemctl daemon-reload && systemctl restart docker`)."
+        description = """
+            Include the registry host for custom registries. The push is made by the Docker daemon, so registry TLS is configured on the Docker host rather than in the task.
+
+            For a registry with a self-signed certificate, copy its CA certificate to `/etc/docker/certs.d/<host:port>/ca.crt`; the daemon reads it on the next push, so no restart is needed.
+
+            For an insecure HTTP registry, add it to `insecure-registries` in `/etc/docker/daemon.json` as shown in the linked [gist](https://gist.github.com/brian-mulier-p/0c5a0ae85e83a179d6e93b22cb471934) and restart Docker (`systemctl daemon-reload && systemctl restart docker`).
+            """
     )
     @NotNull
     @PluginProperty(group = "main")
