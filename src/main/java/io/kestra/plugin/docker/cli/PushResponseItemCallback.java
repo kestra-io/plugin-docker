@@ -1,7 +1,6 @@
 package io.kestra.plugin.docker.cli;
 
 import java.util.Objects;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.github.dockerjava.api.async.ResultCallback;
@@ -63,13 +62,13 @@ public class PushResponseItemCallback extends ResultCallback.Adapter<PushRespons
             return null;
         }
 
-        Matcher matcher = REGISTRY_HOST.matcher(message);
-        String host = matcher.find() ? matcher.group(1) : "<registry-host>";
+        var matcher = REGISTRY_HOST.matcher(message);
+        var host = matcher.find() ? matcher.group(1) : "<registry-host>";
 
         if (message.contains("x509:")) {
             return ("%s. The Docker daemon does not trust the TLS certificate of registry '%s': add the registry CA certificate to " +
-                "'/etc/docker/certs.d/%s/ca.crt' on the Docker host, or list '%s' under 'insecure-registries' in '/etc/docker/daemon.json' " +
-                "and restart Docker.").formatted(message, host, host, host);
+                "'/etc/docker/certs.d/%s/ca.crt' on the Docker host (no restart needed), or list '%s' under 'insecure-registries' in " +
+                "'/etc/docker/daemon.json' and restart Docker.").formatted(message, host, host, host);
         }
 
         if (message.contains("server gave HTTP response to HTTPS client")) {
