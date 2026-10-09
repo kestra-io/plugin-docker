@@ -1,6 +1,5 @@
 package io.kestra.plugin.docker.cli;
 
-import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -189,14 +188,15 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
 
     @Schema(
         title = "Prompt",
-        description = "Required non-blank initial assignment for headless execution. YAML instructions define agent behavior and do not replace this message. " +
-            "Any `kestra://` URI in the prompt is downloaded into the working directory and replaced with its local path before execution; a missing or malformed URI fails the task."
+        description = """
+            Required non-blank initial assignment for headless execution. YAML instructions define agent behavior and do not replace this message.
+            Any `kestra://` URI in the prompt is downloaded into the working directory and replaced with its local path before execution; a missing or malformed URI fails the task.
+            """
     )
     @NotNull
     @PluginProperty(group = "main")
     private Property<String> prompt;
 
-    // The runner executing this task, including the default runner AbstractExecScript creates when none is configured.
     @JsonIgnore
     @Getter(AccessLevel.NONE)
     @EqualsAndHashCode.Exclude
@@ -205,20 +205,17 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
 
     @Override
     protected CommandsWrapper commands(RunContext runContext) throws IllegalVariableEvaluationException {
-        CommandsWrapper commands = super.commands(runContext);
-        TaskRunner<?> runner = commands.getTaskRunner();
+        var commands = super.commands(runContext);
+        var runner = commands.getTaskRunner();
         this.activeRunner.set(runner);
         // Legacy Docker options have already been applied; reuse the same runner during execution.
         return commands.withTaskRunner(runner).withDockerOptions(null);
     }
 
-    /**
-     * Stops the runner executing this task. The inherited implementation only reaches a configured {@code taskRunner},
-     * not the default runner created when none is set.
-     */
+    // Inherited kill() cannot reach the default runner when taskRunner is unconfigured.
     @Override
     public void kill() {
-        TaskRunner<?> runner = this.activeRunner.get();
+        var runner = this.activeRunner.get();
         if (runner != null) {
             runner.kill();
         } else {
@@ -228,8 +225,8 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
 
     @Override
     public ScriptOutput run(RunContext runContext) throws Exception {
-        Path configPath = resolveAgentConfig(runContext);
-        List<String> command = buildAgentCommand(runContext, configPath);
+        var configPath = resolveAgentConfig(runContext);
+        var command = buildAgentCommand(runContext, configPath);
 
         return this.commands(runContext)
             .withCommands(Property.ofValue(command))
@@ -237,8 +234,8 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
     }
 
     List<String> buildAgentCommand(RunContext runContext, Path configPath) throws Exception {
-        List<String> arguments = new ArrayList<>(List.of("/docker-agent", "run", "--exec", "--", configPath.toString()));
-        String renderedPrompt = runContext.render(this.prompt).as(String.class)
+        var arguments = new ArrayList<>(List.of("/docker-agent", "run", "--exec", "--", configPath.toString()));
+        var renderedPrompt = runContext.render(this.prompt).as(String.class)
             .orElseThrow(() -> new IllegalArgumentException("prompt is required for headless execution."));
         if (renderedPrompt.isBlank()) {
             throw new IllegalArgumentException("prompt must not be blank for headless execution.");
@@ -248,43 +245,41 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
     }
 
     Path resolveAgentConfig(RunContext runContext) throws Exception {
-        String config = runContext.render(this.agentConfig).as(String.class)
+        var config = runContext.render(this.agentConfig).as(String.class)
             .orElseThrow(() -> new IllegalArgumentException("agentConfig is required."));
         if (config.isBlank()) {
             throw new IllegalArgumentException("agentConfig must not be blank.");
         }
 
         var workingDir = runContext.workingDir();
-        String source = config.strip();
+        var source = config.strip();
 
         if (source.startsWith(StorageContext.KESTRA_PROTOCOL)) {
-            Path tempFile = workingDir.createTempFile(".yaml");
-            try (InputStream input = runContext.storage().getFile(URI.create(source))) {
+            var tempFile = workingDir.createTempFile(".yaml");
+            try (var input = runContext.storage().getFile(URI.create(source))) {
                 Files.copy(input, tempFile, StandardCopyOption.REPLACE_EXISTING);
             }
             return tempFile;
         }
 
-        // Agent configuration is a YAML mapping; recognize block and flow forms.
-        boolean inlineYaml = source.contains("\n") || source.contains("\r")
+        var inlineYaml = source.contains("\n") || source.contains("\r")
             || source.startsWith("{") || SINGLE_LINE_YAML_MAPPING.matcher(source).matches();
         if (inlineYaml) {
             return workingDir.createTempFile(config.getBytes(StandardCharsets.UTF_8), ".yaml");
         }
 
-        Path relativePath = Path.of(source);
+        var relativePath = Path.of(source);
         if (relativePath.isAbsolute()) {
             throw new IllegalArgumentException("agentConfig file paths must be relative to the working directory.");
         }
 
-        Path sourceFile = workingDir.resolve(relativePath);
+        var sourceFile = workingDir.resolve(relativePath);
         if (!Files.isRegularFile(sourceFile)) {
             throw new IllegalArgumentException(
                 "agentConfig must be inline YAML, a kestra:// URI, or an existing relative file in the working directory: " + source
             );
         }
 
-        // Preserve the config directory so Docker Agent can resolve config-relative references.
         return sourceFile;
     }
 }
