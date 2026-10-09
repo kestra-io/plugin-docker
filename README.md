@@ -46,7 +46,33 @@
 ## What
 
 - Provides plugin components under `io.kestra.plugin.docker`.
-- Includes classes such as `PushResponseItemCallback`, `Build`, `Compose`, `Run`.
+- Includes classes such as `PushResponseItemCallback`, `Build`, `Compose`, `Run`, `Agent`.
+
+## Run a Docker Agent team
+
+Use `io.kestra.plugin.docker.cli.Agent` (also available as `io.kestra.plugin.docker.Agent`) to run a [Docker Agent](https://docs.docker.com/ai/docker-agent/) team headlessly from a flow. Supply the configuration as inline YAML, a relative path in the task working directory, or a `kestra://` URI, pass the required `prompt`, and provide model provider API keys through `env` using secrets.
+
+```yaml
+id: docker_agent_review
+namespace: company.team
+
+tasks:
+  - id: review
+    type: io.kestra.plugin.docker.cli.Agent
+    taskRunner:
+      type: io.kestra.plugin.scripts.runner.docker.Docker
+      user: root
+    env:
+      OPENAI_API_KEY: "{{ secret('OPENAI_API_KEY') }}"
+    prompt: "Review these release notes for breaking changes: v2 removes the legacy /v1 API and adds CSV export."
+    agentConfig: |
+      agents:
+        root:
+          model: openai/gpt-5
+          instruction: You review release notes for breaking changes.
+```
+
+See the [Docker plugin how-to](src/main/resources/doc/io.kestra.plugin.docker.md#docker-agent) for configuration sources, the Docker runner requirements, more examples, and output behavior.
 
 ## Documentation
 * Full documentation can be found under: [kestra.io/docs](https://kestra.io/docs)
