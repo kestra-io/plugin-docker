@@ -1,5 +1,5 @@
-id: docker_run
-namespace: sanitychecks
+id: docker_run_output_file
+namespace: sanitychecks.plugin-docker
 
 inputs:
   - id: greetings
@@ -13,8 +13,7 @@ tasks:
     commands:
       - "/bin/sh"
       - "-c"
-      - echo {{ workingDir }} > file.txt
-      - echo {{ inputs.greetings }} > file.txt
+      - echo "{{ inputs.greetings }}" > file.txt
     outputFiles:
       - file.txt
 
@@ -24,5 +23,6 @@ tasks:
 
   - id: assert
     type: io.kestra.plugin.core.execution.Assert
+    errorMessage: "Unexpected file content {{ outputs.return_file_content.value }}"
     conditions:
-      - "{{outputs.return_file_content.value}} == {{ inputs.greetings }}"
+      - "{{ (outputs.return_file_content.value | trim) == inputs.greetings }}"
