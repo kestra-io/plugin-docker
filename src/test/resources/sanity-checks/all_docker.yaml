@@ -2,13 +2,13 @@ id: all_docker
 namespace: sanitychecks.plugin-docker
 
 tasks:
-  - id: for_each
-    type: io.kestra.plugin.core.flow.ForEach
+  - id: loop
+    type: io.kestra.plugin.core.flow.Loop
     values:
       - run
       - build
     tasks:
       - id: subflow
         type: io.kestra.plugin.core.flow.Subflow
-        flowId: "{{taskrun.value}}"
+        flowId: "{{ item.value }}"
         namespace: "{{ flow.namespace }}"
