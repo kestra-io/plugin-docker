@@ -228,9 +228,7 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
         var configPath = resolveAgentConfig(runContext);
         var command = buildAgentCommand(runContext, configPath);
 
-        return this.commands(runContext)
-            .withCommands(Property.ofValue(command))
-            .run();
+        return BeforeCommands.apply(this, runContext, this.commands(runContext), command).run();
     }
 
     List<String> buildAgentCommand(RunContext runContext, Path configPath) throws Exception {

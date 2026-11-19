@@ -9,6 +9,8 @@ import com.github.dockerjava.api.DockerClient;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.RunnableTaskException;
+import io.kestra.core.models.tasks.runners.TaskException;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.scripts.runner.docker.Docker;
@@ -17,11 +19,46 @@ import jakarta.inject.Inject;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class ComposeTest extends AbstractDockerHelper {
     @Inject
     RunContextFactory runContextFactory;
+
+    @Test
+    void successfulBeforeCommandsKeepComposeArguments() throws Exception {
+        var task = Compose.builder()
+            .id("compose-before-commands-ok")
+            .type(Compose.class.getName())
+            .beforeCommands(Property.ofValue(List.of("echo before")))
+            .taskRunner(Docker.builder().type(Docker.instance().getType()).build())
+            .composeArgs(Property.ofValue(List.of("version", "--short")))
+            .build();
+
+        var output = task.run(TestsUtils.mockRunContext(runContextFactory, task, Map.of()));
+
+        assertThat(output.getExitCode(), is(0));
+    }
+
+    @Test
+    void beforeCommandsAreExecuted() {
+        var task = Compose.builder()
+            .id("compose-before-commands")
+            .type(Compose.class.getName())
+            .beforeCommands(Property.ofValue(List.of("exit 7")))
+            .taskRunner(Docker.builder().type(Docker.instance().getType()).build())
+            .composeArgs(Property.ofValue(List.of("version")))
+            .build();
+
+        var exception = assertThrows(RunnableTaskException.class, () ->
+        {
+            var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+            task.run(runContext);
+        });
+
+        assertThat(((TaskException) exception.getCause()).getExitCode(), is(7));
+    }
 
     @Test
     void upCreatesContainer() throws Exception {
