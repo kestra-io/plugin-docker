@@ -259,13 +259,13 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
             try (var input = runContext.storage().getFile(URI.create(source))) {
                 Files.copy(input, tempFile, StandardCopyOption.REPLACE_EXISTING);
             }
-            return tempFile;
+            return readableByContainerUser(tempFile);
         }
 
         var inlineYaml = source.contains("\n") || source.contains("\r")
             || source.startsWith("{") || SINGLE_LINE_YAML_MAPPING.matcher(source).matches();
         if (inlineYaml) {
-            return workingDir.createTempFile(config.getBytes(StandardCharsets.UTF_8), ".yaml");
+            return readableByContainerUser(workingDir.createTempFile(config.getBytes(StandardCharsets.UTF_8), ".yaml"));
         }
 
         var relativePath = Path.of(source);
@@ -281,5 +281,11 @@ public class Agent extends AbstractExecScript implements RunnableTask<ScriptOutp
         }
 
         return sourceFile;
+    }
+
+    // Temp files are created 0600 by the worker user; the image's non-root user could not read them.
+    private static Path readableByContainerUser(Path file) {
+        file.toFile().setReadable(true, false);
+        return file;
     }
 }
