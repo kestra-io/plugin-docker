@@ -454,6 +454,25 @@ class AgentTest {
         assertThat(((ScriptOutput) exception.getOutput()).getExitCode(), is(exitCode));
     }
 
+    @Test
+    @Timeout(60)
+    void beforeCommandsFailureFailsTaskBeforeAgentRuns() throws Exception {
+        var task = Agent.builder()
+            .id("agent-before-commands-test")
+            .type(Agent.class.getName())
+            .agentConfig(Property.ofValue(CONFIG))
+            .prompt(Property.ofValue("Say hello."))
+            .beforeCommands(Property.ofValue(List.of("exit 7")))
+            .env(Property.ofValue(Map.of("TELEMETRY_ENABLED", "false")))
+            .taskRunner(dockerRunner())
+            .build();
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of());
+
+        var exception = assertThrows(RunnableTaskException.class, () -> task.run(runContext));
+
+        assertThat(((TaskException) exception.getCause()).getExitCode(), is(7));
+    }
+
     private Docker dockerRunner() {
         return Docker.builder()
             .type(Docker.class.getName())

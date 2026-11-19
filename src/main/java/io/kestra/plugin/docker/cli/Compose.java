@@ -130,8 +130,7 @@ public class Compose extends AbstractExecScript implements RunnableTask<ScriptOu
 
         runContext.logger().info("Running command: {}", String.join(" ", args));
 
-        return this.commands(runContext)
-            .withCommands(Property.ofValue(args))
+        return BeforeCommands.apply(this, runContext, this.commands(runContext), args)
             .withTargetOS(runContext.render(this.targetOS).as(TargetOS.class).orElse(null))
             .run();
     }
