@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -97,6 +98,27 @@ class AgentTest {
         assertThat(Files.readString(resolved), is(config));
         assertThat(resolved.getFileName().toString().endsWith(".yaml"), is(true));
         assertThat(resolved.getParent(), is(runContext.workingDir().path()));
+    }
+
+    @Test
+    void generatedConfigFilesAreReadableByContainerUser() throws Exception {
+        var inline = task(CONFIG);
+        var inlineContext = TestsUtils.mockRunContext(runContextFactory, inline, Map.of());
+        var inlineFile = inline.resolveAgentConfig(inlineContext);
+
+        var stored = task("{{ inputs.config }}");
+        var storedContext = TestsUtils.mockRunContext(runContextFactory, stored, Map.of());
+        var uri = storedContext.storage().putFile(
+            new ByteArrayInputStream(CONFIG.getBytes(StandardCharsets.UTF_8)),
+            "agent.yaml"
+        );
+        var storedRunContext = TestsUtils.mockRunContext(runContextFactory, stored, Map.of("config", uri.toString()));
+        var storedFile = stored.resolveAgentConfig(storedRunContext);
+
+        for (var file : List.of(inlineFile, storedFile)) {
+            assertThat(file.toFile().canRead(), is(true));
+            assertThat(Files.getPosixFilePermissions(file).contains(PosixFilePermission.OTHERS_READ), is(true));
+        }
     }
 
     @Test
